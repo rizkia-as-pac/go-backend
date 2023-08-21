@@ -13,6 +13,22 @@ jobs:
 
   test: # JOB
     runs-on: ubuntu-latest # RUNNER
+    
+    services:
+        postgres:
+            image: postgres:15.4-alpine3.18
+            env:
+                POSTGRES_USER: tech_school
+                POSTGRES_PASSWORD: 21204444
+                POSTGRES_DB: simple_bank
+            options: >-
+                --health-cmd pg_isready
+                --health-interval 10s
+                --health-timeout 5s
+                --health-retries 5
+            ports:
+                - 5432:5432
+
     steps: #STEPS
     - name: Set up Go
       uses: actions/setup-go@v4 # existing github ACTION
