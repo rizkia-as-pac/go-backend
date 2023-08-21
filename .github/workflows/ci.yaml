@@ -13,19 +13,24 @@ jobs:
 
   test: # JOB
     runs-on: ubuntu-latest # RUNNER
-    
-    services:
-        postgres:
-            image: postgres:15.4-alpine3.18
-            env:
+
+    services: # Service containers to run with `container-job`
+        postgres: # Label used to access the service container
+            image: postgres:15.4-alpine3.18 # Docker Hub image
+            
+            env: # Provide env variables for postgres
                 POSTGRES_USER: tech_school
                 POSTGRES_PASSWORD: 21204444
                 POSTGRES_DB: simple_bank
+            # Set health checks to wait until postgres has started
+            # memberitahu runner bagaimana caranya mengecek apakah postgres sudah berjalan dengan sukses atau tidak, jadi runner tahu kapan untuk memulai langkah selanjutnya di workflow. ini diperlukan karena kita perlu mengetes menjalankan ps terlebih dahulu sebelum melakukan tes transaksi" didalamnya 
             options: >-
                 --health-cmd pg_isready
                 --health-interval 10s
                 --health-timeout 5s
                 --health-retries 5
+            # spesifi port yang kita ingin expose ke external host
+            #  2023/03/13 17:04:24 error: dial tcp [::1]:5432: connect: connection refused
             ports:
                 - 5432:5432
 
@@ -47,6 +52,17 @@ jobs:
     #         curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
     #         dep ensure
     #     fi
+
+    - name: install migration golang
+    # | digunakan untuk membuat multiple line command
+    # download migrate lalu unzip dan pindahkan ke usr/bin dan ubah namanya menjadi migrate
+      run: |
+       curl -L https://github.com/golang-migrate/migrate/releases/download/v4.16.2/migrate.linux-amd64.tar.gz | tar xvz
+       sudo mv migrate /usr/bin
+       which migrate
+
+    - name: run migration up
+      run: make migrateup
 
     # no need because app will be built automatically when we run go test
     # - name: Build
