@@ -21,4 +21,7 @@ sqlcinit:
 sqlcgenerate:
 	sudo docker run --rm -v $(makeFileDir):/src -w /src sqlc/sqlc:1.8.0 generate
 
-.PHONY: createpgcontainer createdb dropdb migrateup migratedown sqlcinit sqlcgenerate
+test:
+	go test -v -cover ./...
+
+.PHONY: createpgcontainer createdb dropdb migrateup migratedown sqlcinit sqlcgenerate test

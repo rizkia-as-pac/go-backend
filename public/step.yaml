@@ -208,11 +208,18 @@
 
 [Backend 10] Setup github actions for golang + postgres to run automated test
 
+  - create and push to github repository:
+
+  - set recommended workflows (prefered copy the generated content and doing it locally and push it later) :
+    - go workflows 
+      # copy dari go workflows buaat ci.yaml di github workflows, lalu rename build job jadi test job
+
+  - add ci.yaml file to github workflows folder in our repository :
+
   - define Workflow :
     # workflow is basically an automated procedure that's made up of one or more jobs.
     # can be trigerred by : event, schedule, manually use button.
-
-  - add ci.yaml file to github workflows folder in our repository :
+  
 
   # RUNNER = in order to run the jobs, we must specify a runner for each of them. a runner is simply a server that listens for available jobs. and only run one job at a time.
 

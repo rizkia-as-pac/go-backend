@@ -1,0 +1,40 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: ci-test # nama ini akan ditampilkan di actions pada github pages
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  test: # JOB
+    runs-on: ubuntu-latest # RUNNER
+    steps: #STEPS
+    - name: Set up Go
+      uses: actions/setup-go@v4 # existing github ACTION
+      with: # with provide input parameters to this
+        go-version: '1.20' 
+      id: go # hanya sebuah unik identifier dari step ini, we might need it if we want to refer to this step in other context
+
+    - name: Check out code into the Go module directiory # check out the code of this repos into the runner
+      uses: actions/checkout@v3 
+
+    # no need this step because go mod will automaticall download missing libraries or run the test
+    # - name: Get dependencies
+    #   run : |
+    #     go get -v -t -d ./...
+    #     if [ -f Gopkg.toml ];then
+    #         curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+    #         dep ensure
+    #     fi
+
+    # no need because app will be built automatically when we run go test
+    # - name: Build
+    #   run: go build -v ./... # ourself ACTION
+
+    - name: Test
+      run: make test
