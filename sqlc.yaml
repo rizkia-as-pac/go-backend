@@ -1,0 +1,12 @@
+version: "1"
+packages:
+  - name: "db" # nama go package yang akan digenerate
+    path: "./db/sqlc" # path dimana generate kode akan disimpan
+    queries: "./db/query/" # path dimana sqlc mencari sql file sebagai basis
+    schema: "./db/migration/" # sqlc mencari schema atau migration
+    engine: "postgresql"
+    emit_prepared_queries: false
+    emit_interface: false # memberitahunakn sqlc untuk generate querier interface pada generated code, nantinya berguna untuk mock database
+    emit_exact_table_names: false # jika false accounts table --> account struct. jika true accounts table --> accounts struct
+    emit_empty_slices: false
+    emit_json_tags: true # memberitahukan sqlc untuk menambahkan json tags pada generated code

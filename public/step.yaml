@@ -1,0 +1,223 @@
+[Backend 1] Design DB schema and generate SQL code use dbdiagram.io
+
+[Backend 2] Install & use Docker + Postgres + TablePlus to create DB schema
+
+[Backend 3] Write & run database migration in Golang
+  - install golang migrate : 
+    wget http://github.com/golang-migrate/migrate/releases/latest/download/migrate.linux-amd64.deb
+    sudo dpkg -i migrate.linux-amd64.deb
+
+  - init db schema with name init_schema:
+    migrate create -ext sql -dir db/migration -seq init_schema
+
+  - write up and down schema :
+
+  - create database directly use docker exec :
+    sudo docker exec -it pgsql createdb --username=tech_school --owner=tech_school simple_bank
+
+  - to delete : 
+    sudo docker exec -it pgsql createdb --username=tech_school --owner=tech_school simple_bank 
+
+  - create Makefile and fill it :
+
+  - run migrate up:
+    migrate -path db/migration -database "postgresql://tech_school:21204444@localhost:5432/simple_bank?sslmode=disable" -verbose up # -verbose=" ask migrate to print verbose logging"
+
+[Backend 4] Generate CRUD Golang code from SQL | Compare db/sql, gorm, sqlx & sqlc
+  - menggunakan SQLC :
+    docker pull sqlc/sqlc # pastikan arsitekturnya sesuai contoh (linux/amd64)
+
+  - run for init file sqlc.yaml :
+    sudo docker  run --rm -v $(pwd):/src -w /src sqlc/sqlc:1.8.0 init
+
+  - write generated sqlc.yaml :
+
+  - write query code for sqlc to use as code base :
+    reference : https://docs.sqlc.dev/en/stable/tutorials/getting-started-postgresql.html
+  
+  - run sqlc to generate code :
+    sudo docker run --rm -v $(makeFileDir):/src -w /src sqlc/sqlc:1.8.0 generate
+  
+[Backend 5] Write Golang unit tests for database CRUD with random data
+  - setup connection to db in main_test.go :
+    DB functions are defined as method of Queries object therefore we need to setup db connection to talk to the db
+  
+  - create random utils :
+
+[Backend 6] A clean way to implement database transaction in Golang
+  # db transaction is single unit of work, often made up of multiple db operations. see : 06 transfer example.png
+  # why do we need db transaction :
+    # - to provide a reliable and consistent unit of work, even in case of system failure
+    # - to provide isolation between programs that acccess the database concurrently
+
+  # untuk memenuhi 2 tujuan diatas maka database harus memenuhi ACID PROPERTY
+    # - Atomicity  = sebuah operasi harus berhasil sepenuhnya atau  gagal sepenuhnya dan database berubah kembali ke kondisi awalnya (unchanged) jika gagal
+    # - Consistentcy = keadaan database harus valid setelah transaction. semua constraint (batasan atau syarat") harus terpenuhi. atau dengan kata lain semua data yang diinputkan harus valid sesuai dengan tipe datanya termasuk cascade (sequence of some event)
+    # - isolation = transaction yang berjalan bersamaan (concurrently) tidak boleh mempengaruhi satu sama lain. ada  beberapa level dari isolation yang mendefinisikan kapan suatu perubahan yang dilakukan oleh sebuah transaction dapat dilihat oleh transaction lainnya
+    # - durability = data data transaction yang sukses dilakukan harus terecord dan terus menerus harus ada didalam penyimpanan atau tidak boleh hilang apapun yang terjadi pada sistem
+    
+  - create transaction in store.go in db/sqlc :
+
+  - create test for store.go :
+
+[Backend 7] DB transaction lock & how to handle deadlock in Golang
+  # jika kita tidak menerapkan isolation maka akan ada kamungkinan terjadinya "read phenomena"
+
+  #  READ PHENOMENA
+  #  terjadi jika ada satu transaction yang terpengaruhi dengan transaction lainnya
+  #      a. when low level transaction isolation
+
+  #      - dirty read 
+  #      = a transaction READS data writen by other concurrent UNCOMMITED transaction. ini buruk karna kita tidak tau apakah data yang dibaca tersebut pada akhirnya akan di commit atau akan di rollback
+
+  #      - non-repeatable read 
+  #     = a transaction READS the SAME ROW TWICES and return different value because it has been        MODIFIED after the first read by other COMMITED transaction. 
+
+  #      - phantom read 
+  #      = a transaction RE-EXEECUTES a query to FIND ROWS that satisfy a condition and return a DIFFERENT SET of rows, due to changes by other recently commited transaction. pada pemanggilan pertama ada 5 row lalu ketika dipanggil lagi hanya 4 yang muncul
+        
+  #      - serialization anomaly
+  #      = the result of a GROUP of concurrent COMMITED TRANSACTION is IMPOSIBLE TO ACHIVE if we try to run them SEQUENTIALLY in any order without overlapping
+
+
+  #  4 STANDARD ISOLATION LEVELS (by ANSI (american national standards institue))
+
+  #  makin tinggi nomornya berarti semakin tinggi
+  #  1. read uncommited = pada level ini sebuah transaksi dapat membaca data dari transaksi lain yang belum di commit
+
+  #  2. read commited = tranksaksi hanya bisa membaca data dari tranksaksi lain yang sudah di commit
+
+  #  3. repeatable read = same read or select query always return same result. tidak peduli berapa kali dieksekusinya bahkan ketika ada transaksi lain yang melakukan commit, jika ada commit dari tranksaksi lain maka akan mengembalikan nilai lama seakan transaksi lain tsb tidak pernah terjadi
+
+  #  4. serializable = can achive same result if execute transaction serially in some order instead of concurrently. tranksaksi yang dijalankan secara concurent yang berjalan pada level ini dijamin menghasilkan hasil akhir yang sama jika mereka di eksekusi SEQUENTIALLY dalam urutan tertentu satu demi satu tanpa overlapping. 
+  #  basically at least ada satu urutan untuk menjalankan concurent transaction sehingga ketika kita menjalankannya satu demi satu hasil akhirnya akan sama
+
+
+
+  #  postgress ql
+
+  #  read uncommited = untuk postgress tidak memiliki read uncommited, bisa kita set namun behaviournya sama seperti read commited
+
+  #  read commited = mencegah dirty read
+
+  #  repeatable read = mencegah non-repeatable read dan juga mencegah phantom read terjadi tetapi juga mencegah confusing state dimana pada sql lain meskipun kita tidak dapat membaca data yang diubah transaksi lain tapi kita masih bisa mengubah data di tranksaksi kita sendiri yang mana itu akan membuat kebingungan
+
+  #  serializable = mencegah serializable anomaly dengan mencegah transaction read/write yang dilakukan tranksaksi lainnya yang mana transaction read/write tersebut nilainya bergantung dengan nilai yang terpengaruhi oleh tranksaksi yang lainnya lagi
+
+  #  KEEP IN MIND when using high level isolation
+  #  retry mechanism
+  #  - there might be error, timeout or deadlock
+
+  #  read documentation
+  #  - each database engine might implement isolation level differently
+
+  - add special sql to update an account for transaction :
+   
+    # -- name: GetAccountForUpdate :one
+      SELECT * FROM accounts
+      WHERE id = $1 LIMIT 1
+      FOR NO KEY UPDATE; 
+
+    # FOR UPDATE memastikan bahwa ketika ada satu transaksi berjalan maka transaksi lainnya harus menunggu transaksi itu selesai agar tidak terjadi dirty read
+
+     #NO KEY setting memberitahu sql bahwa jika kita ingin melakukan transaction maka yang berubah hanya balance nya saja dan tidak merubah primary key yang terdapat constraint nya. hal ini berguna untuk melakukan transcation secara concurent untuk mencegah terjadinya deadlock.
+
+  - add special queries to add an account balance directly is other way to prevent deadlock :
+
+
+[Backend 8] How to avoid deadlock in DB transaction ? Queries order matters!
+  # best way to deal with deadlock is to avoid it. by that it's mean we have to fine-tune our queries in the transaction so that deadlock won't have a chance to occur, or at least minimize its chance of occurence.
+
+  # salah satu hal yang membuat deadlock terjadi adalah urutan eksekusi transaksi yang tidak terurut.
+  # oleh karena itu salah satu cara untuk mengatasinya adalah dengan mengeksekusi transaksi secara beraturan.
+
+  # dimana jika ada urutan eksekusi transaksi sql seperti berikut :
+   # TRANSAKSI 1
+      # UPDATE accounts SET balance = balance - 10 WHERE id = 1 RETURNING *; 1
+      # UPDATE accounts SET balance = balance + 10 WHERE id = 2 RETURNING *; 3
+
+    # TRANSAKSI 2
+      # UPDATE accounts SET balance = balance - 10 WHERE id = 2 RETURNING *; 2
+      # UPDATE accounts SET balance = balance + 10 WHERE id = 1 RETURNING *; 4
+    
+   # bisa diubah menjadi sperti berikut, agar eksekusinya urut sesuai ID akun yang diubah :
+   # TRANSAKSI 1
+      # UPDATE accounts SET balance = balance - 10 WHERE id = 1 RETURNING *; 1
+      # UPDATE accounts SET balance = balance + 10 WHERE id = 2 RETURNING *; 3
+
+    # TRANSAKSI 2
+      # UPDATE accounts SET balance = balance + 10 WHERE id = 1 RETURNING *; 2
+      # UPDATE accounts SET balance = balance - 10 WHERE id = 2 RETURNING *; 4
+
+
+  - update transaction TransferTx code is other way to minimize deadlock :
+    # kita bisa mengakali kode transaction TransferTX agar transaksinya dieksekusi seperti diatas. bisa dilihat di TransferTXV2
+
+[Backend 9] Understand isolation levels & read phenomena in MySQL & PostgreSQL 
+  # Isolation is one of the four property of a database transaction, where at its highest level, a perfect isolation ensures that all concurrent transactions will not afferct each other.
+    
+  # jika kita tidak menerapkan isolation maka akan ada kamungkinan terjadinya "read phenomena"
+
+  # READ PHENOMENA
+  # read phenomena terjadi jika ada satu transaction yang terpengaruhi dengan transaction lainnya
+     #  a. when low level transaction isolation
+
+      # - dirty read 
+      # = a transaction READS data writen by other concurrent UNCOMMITED transaction. ini buruk karna # # kita tidak tau apakah data yang dibaca tersebut pada akhirnya akan di commit atau akan di rollback
+
+      # - non-repeatable read 
+      # = a transaction READS the SAME ROW TWICES and return different value because it has been MODIFIED after the first read by other COMMITED transaction. 
+
+      # - phantom read 
+      # = a transaction RE-EXEECUTES a query to FIND ROWS that satisfy a condition and return a DIFFERENT SET of rows, due to changes by other recently commited transaction. pada pemanggilan pertama ada 5 row lalu ketika dipanggil lagi hanya 4 yang muncul
+      
+      # - serialization anomaly
+      # = the result of a GROUP of concurrent COMMITED TRANSACTION is IMPOSIBLE TO ACHIVE if we try to run them SEQUENTIALLY in any order without overlapping
+
+
+  # 4 STANDARD ISOLATION LEVELS (by ANSI (american national standards institue))
+
+  # makin tinggi nomornya berarti semakin tinggi
+  # 1. read uncommited = pada level ini sebuah transaksi dapat membaca data dari transaksi lain yang belum di commit 
+
+  # 2. read commited = tranksaksi hanya bisa membaca data dari tranksaksi lain yang sudah di commit
+
+  # 3. repeatable read = same read or select query always return same result. tidak peduli berapa kali dieksekusinya bahkan ketika ada transaksi lain yang melakukan commit, jika ada commit dari tranksaksi lain maka akan mengembalikan nilai lama seakan transaksi lain tsb tidak pernah terjadi
+
+  # 4. serializable = can achive same result if execute transaction serially in some order instead of concurrently. tranksaksi yang dijalankan secara concurent yang berjalan pada level ini dijamin menghasilkan hasil akhir yang sama jika mereka di eksekusi SEQUENTIALLY dalam urutan tertentu satu demi satu tanpa overlapping. 
+  # basically at least ada satu urutan untuk menjalankan concurent transaction sehingga ketika kita menjalankannya satu demi satu hasil akhirnya akan sama
+
+
+
+  # postgress ql
+
+  # read uncommited = untuk postgress tidak memiliki read uncommited, bisa kita set namun behaviournya sama seperti read commited
+
+  # read commited = mencegah dirty read
+
+  # repeatable read = mencegah non-repeatable read dan juga mencegah phantom read terjadi tetapi juga mencegah confusing state dimana pada sql lain meskipun kita tidak dapat membaca data yang diubah transaksi lain tapi kita masih bisa mengubah data di tranksaksi kita sendiri yang mana itu akan membuat kebingungan
+
+  # serializable = mencegah serializable anomaly dengan mencegah transaction read/write yang dilakukan tranksaksi lainnya yang mana transaction read/write tersebut nilainya bergantung dengan nilai yang terpengaruhi oleh tranksaksi yang lainnya lagi
+
+  # KEEP IN MIND when using high level isolation
+  # retry mechanism
+  # - there might be error, timeout or deadlock
+
+  # read documentation
+  # - each database engine might implement isolation level differently
+
+[Backend 10] Setup github actions for golang + postgres to run automated test
+
+  - define Workflow :
+    # workflow is basically an automated procedure that's made up of one or more jobs.
+    # can be trigerred by : event, schedule, manually use button.
+
+  - add ci.yaml file to github workflows folder in our repository :
+
+  # RUNNER = in order to run the jobs, we must specify a runner for each of them. a runner is simply a server that listens for available jobs. and only run one job at a time.
+
+  # JOB = is a set of steps execute on the same runner. normal job run in parallel. dependent job run serially.
+
+  # STEP = are individual task run serially within a job. a step contain 1 or multiple actions.
+
+  #  ACTION = is standalone command. run serially within a step. can be reused
