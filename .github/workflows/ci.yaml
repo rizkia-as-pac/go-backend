@@ -17,7 +17,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4 # existing github ACTION
       with: # with provide input parameters to this
-        go-version: '1.20' 
+        go-version: '1.21.0' 
       id: go # hanya sebuah unik identifier dari step ini, we might need it if we want to refer to this step in other context
 
     - name: Check out code into the Go module directiory # check out the code of this repos into the runner
