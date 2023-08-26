@@ -1,5 +1,5 @@
 createpgcontainer:
-	sudo docker container create --name pgsql -p 5432:5432 -e POSTGRES_USER=tech_school -e POSTGRES_PASSWORD=21204444 postgres:15.4-alpine3.18
+	sudo docker container create --network simple-bank-network --name pgsql -p 5432:5432 -e POSTGRES_USER=tech_school -e POSTGRES_PASSWORD=21204444 postgres:15.4-alpine3.18
 
 createdb:
 	sudo docker container exec -it pgsql createdb --username=tech_school --owner=tech_school simple_bank

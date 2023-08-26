@@ -468,3 +468,27 @@
 
   - create new branch :
       git checkout -b ft/docker
+
+  - create new Dockerfile to create golang backend docker image :
+
+  - run to build :
+      sudo docker build --tag simplebank:gin.http.1.0 .
+
+[24] connect containers in the same docker network 
+  
+
+  - create network to connect golang backend contaner with postgress container :
+    sudo docker network create simpe-bank-network
+
+  - connect container to network :
+    sudo docker network connect simple-bank-network pgsql
+    sudo docker network connect simple-bank-network simplebank
+
+  - create and run golang backend container :
+    sudo docker container run --name simplebank --network simple-bank-network -p 8080:8080 -e DB_SOURCE="postgresql://tech_school:21204444@pgsql:5432/simple_bank?sslmode=disable" simplebank:gin.http.1.0
+
+    for running in release mode add -e GIN_MODE=release :
+        sudo docker container run --name simplebank --network simple-bank-network -p 8080:8080 -e GIN_MODE=release -e DB_SOURCE="postgresql://tech_school:21204444@pgsql:5432/simple_bank?sslmode=disable" simplebank:gin.http.1.0
+
+  - update Makefile on postgress comman to immediately connect with docker network. add --network simple-bank-network :
+        createpgcontainer: sudo docker container create --network simple-bank-network --name pgsql -p 5432:5432 -e POSTGRES_USER=tech_school -e POSTGRES_PASSWORD=21204444 postgres:15.4-alpine3.18
