@@ -14,6 +14,8 @@ jobs:
   test: # JOB
     runs-on: ubuntu-latest # RUNNER
 
+    # for reference search in google : github actions postgres
+    # services = list external services that we want to run together with our jobs
     services: # Service containers to run with `container-job`
         postgres: # Label used to access the service container
             image: postgres:15.4-alpine3.18 # Docker Hub image
@@ -56,9 +58,10 @@ jobs:
     - name: install migration golang
     # | digunakan untuk membuat multiple line command
     # download migrate lalu unzip dan pindahkan ke usr/bin dan ubah namanya menjadi migrate
+    # which migrate = lokasi dimana migrate terinstall di ubuntu
       run: |
        curl -L https://github.com/golang-migrate/migrate/releases/download/v4.16.2/migrate.linux-amd64.tar.gz | tar xvz
-       sudo mv migrate /usr/bin
+       sudo mv migrate /usr/bin 
        which migrate
 
     - name: run migration up

@@ -17,20 +17,20 @@ func TestCreateAccount(t *testing.T) {
 }
 
 func createRandomAccount(t *testing.T) Account {
-	randomPerson := random.RandomPerson()
+	createdUser := createRandomUser(t)
 
 	var arg CreateAccountParams = CreateAccountParams{
-		Owner:    randomPerson.Name,
-		Balance:  randomPerson.Balance,
-		Currency: randomPerson.Currency,
+		Owner:    createdUser.Username,
+		Balance:  random.RandomMoney(),
+		Currency: random.RandomCurrency(),
 	}
 	account, err := testQueries.CreateAccount(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, account)
 
-	require.Equal(t, randomPerson.Name, account.Owner)
-	require.Equal(t, randomPerson.Balance, account.Balance)
-	require.Equal(t, randomPerson.Currency, account.Currency)
+	require.Equal(t, createdUser.Username, account.Owner)
+	require.Equal(t, arg.Balance, account.Balance)
+	require.Equal(t, arg.Currency, account.Currency)
 
 	require.NotZero(t, account.ID)
 	require.NotZero(t, account.CreatedAt)
@@ -90,12 +90,12 @@ func TestUpdateAccount(t *testing.T) {
 }
 
 func TestListAccount(t *testing.T) {
-	user := createRandomAccount(t)
+	createdUser := createRandomUser(t)
 	cur := []string{curr.USD, curr.JPY, curr.RUB}
 
 	for i := 0; i < 3; i++ {
 		var arg CreateAccountParams = CreateAccountParams{
-			Owner:   user.Owner,
+			Owner:   createdUser.Username,
 			Balance: random.RandomMoney(),
 			// Currency: random.RandomCurrency(), // kita tidak menggunkan random currency karna kemungkinan random menghasilkan currency yang sama untuk satu username sangat tinggi
 			Currency: cur[i],
@@ -106,12 +106,13 @@ func TestListAccount(t *testing.T) {
 	}
 
 	// tes limit 2
-	arg := ListAccountsParams{
+	arg := ListAccountParams{
+		Owner:  createdUser.Username,
 		Limit:  2,
 		Offset: 0,
 	}
 
-	listAccount, err := testQueries.ListAccounts(context.Background(), arg)
+	listAccount, err := testQueries.ListAccount(context.Background(), arg)
 	require.NoError(t, err)
 	require.Len(t, listAccount, 2)
 
@@ -121,18 +122,19 @@ func TestListAccount(t *testing.T) {
 	}
 
 	// tes limit 3
-	arg = ListAccountsParams{
+	arg = ListAccountParams{
+		Owner:  createdUser.Username,
 		Limit:  3,
 		Offset: 0,
 	}
 
-	listAccount, err = testQueries.ListAccounts(context.Background(), arg)
+	listAccount, err = testQueries.ListAccount(context.Background(), arg)
 	require.NoError(t, err)
 	require.Len(t, listAccount, 3)
 
 	for _, account := range listAccount {
 		require.NotEmpty(t, account)
-		// require.Equal(t, user.Username, account.Owner)
+		require.Equal(t, createdUser.Username, account.Owner)
 
 	}
 }

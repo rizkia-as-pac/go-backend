@@ -10,8 +10,14 @@ dropdb:
 migrateup:
 	migrate -path db/migration -database "postgresql://tech_school:21204444@localhost:5432/simple_bank?sslmode=disable" -verbose up
 
+migrateup1:
+	migrate -path db/migration -database "postgresql://tech_school:21204444@localhost:5432/simple_bank?sslmode=disable" -verbose up 1
+
 migratedown:
 	migrate -path db/migration -database "postgresql://tech_school:21204444@localhost:5432/simple_bank?sslmode=disable" -verbose down
+
+migratedown1:
+	migrate -path db/migration -database "postgresql://tech_school:21204444@localhost:5432/simple_bank?sslmode=disable" -verbose down 1
 
 makeFileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -24,4 +30,12 @@ sqlcgenerate:
 test:
 	go test -v -cover ./...
 
-.PHONY: createpgcontainer createdb dropdb migrateup migratedown sqlcinit sqlcgenerate test
+server:
+	go run main.go
+
+mock:
+	mockgen -package mockdb -destination db/mock/store.go github.com/tech_school/simple_bank/db/sqlc Store
+
+#  delete from transfers; delete from entries ; delete from accounts ; delete from users ;
+
+.PHONY: createpgcontainer createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlcinit sqlcgenerate test server mock
