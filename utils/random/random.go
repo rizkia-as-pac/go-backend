@@ -80,7 +80,8 @@ func RandomCountry() string {
 }
 
 type RdPerson struct {
-	Name        string
+	Username    string
+	FullName    string
 	Email       string
 	Password    string
 	Balance     int64
@@ -117,7 +118,8 @@ func RandomPerson() RdPerson {
 	name := RandomOwner()
 
 	return RdPerson{
-		Name:        name + " " + lastName,
+		Username:    name,
+		FullName:    name + " " + lastName,
 		Email:       RandomEmail(name),
 		Password:    RandomPassword(),
 		Balance:     balance,

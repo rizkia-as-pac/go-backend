@@ -1,8 +1,8 @@
-[Backend 1] Design DB schema and generate SQL code use dbdiagram.io
+[1] Design DB schema and generate SQL code use dbdiagram.io
 
-[Backend 2] Install & use Docker + Postgres + TablePlus to create DB schema
+[2] Install & use Docker + Postgres + TablePlus to create DB schema
 
-[Backend 3] Write & run database migration in Golang
+[3] Write & run database migration in Golang
   - install golang migrate : 
     wget http://github.com/golang-migrate/migrate/releases/latest/download/migrate.linux-amd64.deb
     sudo dpkg -i migrate.linux-amd64.deb
@@ -23,7 +23,7 @@
   - run migrate up:
     migrate -path db/migration -database "postgresql://tech_school:21204444@localhost:5432/simple_bank?sslmode=disable" -verbose up # -verbose=" ask migrate to print verbose logging"
 
-[Backend 4] Generate CRUD Golang code from SQL | Compare db/sql, gorm, sqlx & sqlc
+[4] Generate CRUD Golang code from SQL | Compare db/sql, gorm, sqlx & sqlc
   - menggunakan SQLC :
     docker pull sqlc/sqlc # pastikan arsitekturnya sesuai contoh (linux/amd64)
 
@@ -38,13 +38,13 @@
   - run sqlc to generate code :
     sudo docker run --rm -v $(makeFileDir):/src -w /src sqlc/sqlc:1.8.0 generate
   
-[Backend 5] Write Golang unit tests for database CRUD with random data
+[5] Write Golang unit tests for database CRUD with random data
   - setup connection to db in main_test.go :
     DB functions are defined as method of Queries object therefore we need to setup db connection to talk to the db
   
   - create random utils :
 
-[Backend 6] A clean way to implement database transaction in Golang
+[6] A clean way to implement database transaction in Golang
   # db transaction is single unit of work, often made up of multiple db operations. see : 06 transfer example.png
   # why do we need db transaction :
     # - to provide a reliable and consistent unit of work, even in case of system failure
@@ -60,7 +60,7 @@
 
   - create test for store.go :
 
-[Backend 7] DB transaction lock & how to handle deadlock in Golang
+[7] DB transaction lock & how to handle deadlock in Golang
   # jika kita tidak menerapkan isolation maka akan ada kamungkinan terjadinya "read phenomena"
 
   #  READ PHENOMENA
@@ -125,7 +125,7 @@
   - add special queries to add an account balance directly is other way to prevent deadlock :
 
 
-[Backend 8] How to avoid deadlock in DB transaction ? Queries order matters!
+[8] How to avoid deadlock in DB transaction ? Queries order matters!
   # best way to deal with deadlock is to avoid it. by that it's mean we have to fine-tune our queries in the transaction so that deadlock won't have a chance to occur, or at least minimize its chance of occurence.
 
   # salah satu hal yang membuat deadlock terjadi adalah urutan eksekusi transaksi yang tidak terurut.
@@ -153,7 +153,7 @@
   - update transaction TransferTx code is other way to minimize deadlock :
     # kita bisa mengakali kode transaction TransferTX agar transaksinya dieksekusi seperti diatas. bisa dilihat di TransferTXV2
 
-[Backend 9] Understand isolation levels & read phenomena in MySQL & PostgreSQL 
+[9] Understand isolation levels & read phenomena in MySQL & PostgreSQL 
   # Isolation is one of the four property of a database transaction, where at its highest level, a perfect isolation ensures that all concurrent transactions will not afferct each other.
     
   # jika kita tidak menerapkan isolation maka akan ada kamungkinan terjadinya "read phenomena"
@@ -206,7 +206,7 @@
   # read documentation
   # - each database engine might implement isolation level differently
 
-[Backend 10] Setup github actions for golang + postgres to run automated test
+[10] Setup github actions for golang + postgres to run automated test
 
   - create and push to github repository:
 
@@ -214,7 +214,7 @@
     - go workflows 
       # copy dari go workflows buaat ci.yaml di github workflows, lalu rename build job jadi test job
 
-  - add ci.yaml file to github workflows folder in our repository :
+  - add ci.yaml file to github workflows folder:
 
   - define Workflow :
     # workflow is basically an automated procedure that's made up of one or more jobs.
@@ -228,3 +228,267 @@
   # STEP = are individual task run serially within a job. a step contain 1 or multiple actions.
 
   #  ACTION = is standalone command. run serially within a step. can be reused
+
+  - push to github repository  and see the test running:
+
+[11] Implement HTTP API in Go using Gin
+  - install gin:
+    $ go get -u github.com/gin-gonic/gin
+  
+  - setup server in api/server.go :
+  
+  - create handler (account.go, entry.go, etc) :
+    urutan kerja handler 
+        - binding request (return error if exist)
+        - run sql (return error if exist)
+        - return response
+
+  - create entry point for server in the main.go file :
+
+  - add new makefile command to run server :
+    go run main.go
+
+[12] Load config from file & env vars with viper
+  # reason to read vars from file
+    # - DEVELOPMENT = easily specify default congfiguration for local development and testing
+
+  # reason to read vars from env vars
+    # - DEPLOYMENT = easyly override the default configurations when deploy with docker containers.
+
+  # reason to use Viper to read vars 
+    # able to find, load, unmarshal config file from JSON, TOML, YAML, ENV, INI
+    # able to read config from environtment variables or flags. this will override existing values and set default values
+    # able to read config from remote system such as Etcd, Consul
+    # it works for both unencrypted and encrypted values.
+    
+    # viper able to watch for changes in the config file, and notify the application about it.
+      # Live watching ad writing config file
+        # reread changed file, save any modifications.
+
+  - installing viper :
+      go get github.com/spf13/viper
+    
+  - create and fill app.env :
+    # to store our config values for development
+
+  - create and define new utils to load config object, config.go :
+
+  - implement on main.go, main_test.go :
+
+  - try to user viper to read env var. run :
+    SERVER_ADDRESS=0.0.0.0:8081 make server
+
+[13] Mock DB for testing HTTP API in Go and achieve 100% coverage
+  # why mock db ?
+      # - Independent test = isolate test data from real database to avoid conflicts
+          # because each test use it's own separate mock db to store data
+
+      # - Faster test = reduce a lot of time talking to the database
+          #  reduce  a lot of time talking to the database. karna test tidak harus menghabiskan banyak waktu talking to the db dan menunggu query untuk berjalan. semua action akan di lakukan di memory dalam proses yang sama
+
+      # - 100% coverage = easily setup edge cases = unexpected errors
+          # it allow us to write test that achive 100% coverage. with mock db, we can easily setup and test some edge cases such as unexpected error, or connection lost.
+
+      # apakah sudah cukup jika kita menggunakan mock ? 
+        #ya karena database kita yang asli sudah kita pernah tes sebelumnya
+
+      # all we need to do is make sure that the mock db implement the same interface as the real db. then everything will be working just fine when being put together.
+
+  - install gomock :
+      go install go.uber.org/mock/mockgen@latest
+  
+  - add go/bin that store gomock package to path :
+      add to vim ~/.zshrc ==> export PATH=$PATH:~/Desktop/go/bin
+
+  - run :
+      go get go.uber.org/mock/mockgen/model
+    
+  - update server.go and store.go code :
+  
+  - update sqlc config to emmit interface that contain all function of the queries struct :
+    # querier.go will appear in db/sqlc after run generate
+
+  - run mockgen :
+      mockgen -package mockdb -destination db/mock/store.go github.com/tech_school/simple_bank/db/sqlc Store
+
+  - start write test for api (account_test.go, etc) :
+
+  - add new main_test in api :
+
+[14] implement transfer money API with a custom params validator
+  - create handler function in api (transfer.go) :
+
+  - apply handler to router in server :
+
+  - create new util, for currency :
+
+  - create custom validator (validator.go) :
+
+  - register custom validator to gin in server :
+
+  - apply custom validator to binding request :
+  
+
+[15] add users table with unique & foreign key constraints in PostgreSQL for user authen and author
+  - add user table and connect it with the existing accounts table via some db constraints :
+
+  - update dbdiagram schema and export it as psql :
+
+  - create new migration version :
+    migrate create -ext sql -dir db/migration -seq v2add_users
+
+  - define migrate up schema :
+
+  - run make migrate up to apply newer migration:
+   # ini mungkin akan error, karena kita sudah punya list akun sebelumnya sudah ada namun tidak terkait dengan owner manapun. error constraint
+
+   # error ini membuat schmea migrations table pada db kita berada pada kondisi dirty, hal ini membuat kita tidak dapat menjalankan migrate down. untuk memperbaikinya kita hanya perlu secara manual mengubah nilai dirty menjadi false. setelah itu kita bisa melakukan mig down
+  
+      - lakukan migrate down :
+      - dan jalankan migrate up lagi : 
+        # kini sudah ada table user yang baru ditambahkan
+
+  - define migrate down schema :
+    # when writing the migration down, we should reverse what were done in the migration up.
+
+  - add command in Makefile to run migrate down one version bellow :
+
+  - add command in Makefile to run migrate up one version above :
+
+[16] Handler DB errors in Golang correctly
+
+  - create new SQL code for user table :
+
+  - run make sqlcgenerate to update querier :
+
+  - create testing for new user query function (user_test.go):
+
+  - run make mock to update mock :
+
+  - update previous query function testing code to support new user table and it's new constraint toward other table :
+
+[17] Securely store passwords with Hash password in Go with Bcrypt
+  # hashed password bertujuan agar password yang disimpan dalam database tidak disimpan begitu saja dalam bentuk password yang sesungguhnya. hal ini untuk mencegah orang" internal yang dapat mengakses database tidak bisa mengetahui password yang disimpan oleh pengguna.
+  # jika ada yang meretas database berisi akun dan password yang disimpan oleh pengguna ia tidak bisa langsung menggunakan data" password yang ia dapatkan. 
+  - create new utils for password (passwor.go):
+
+  - create test for password util to check if it works properly :
+
+  - update testing for generated query function to apply this hash password technique :
+
+  - create API handler to handle create user that implement this hash password technique to manage user password :
+
+  - register the handler to the route in server :
+
+[18] How to write stronger  unit tests with a custom gomock matcher
+  -
+
+[19] Token based authentication 
+    # menerapkan Token Based Authentication
+    #  alur TBA 
+    #    1. client melakukan POST untuk login (username,password)
+    #    2. server akan mengecek apakah username dan password tsb benar apa tidak
+    #    3. jika benar 
+    #    4. server akan membuat dan sign a token 
+    #    5. server mengirim status 200 dan juga access tokennya (jwt atau paseto) 
+    #    6. token tsb dapat digunakan client ketika melakukan fetch dimana akan diletakan diheader fetch tsb
+    #    7. contoh client request list akun bank
+    #    8. server akan memverifikasi apakah token yang dikirim oleh client valid atau tidak 
+    #    9. jika valid maka server akan mengirim balik status 200 beserta list akun yg di request 
+
+[20] Create and verify JWT & PASETO in golang :
+  - create new package (token) :
+
+  - create payload struct and function to create and verify it :
+    # membuat struct Payload berisi data payload yang terkandung didalam token
+      - install UUID package for payload uuid :
+        go get github.com/google/uuid
+
+  - create token maker :
+    # declare a general token maker interface to manage creation and verification of the tokens.
+
+  - create JWT maker :
+      - run to install golang JWT package :
+        go get github.com/dgrijalva/jwt-go
+      
+      - create test function for JWT maker :
+
+  - create PASETO :
+      - run to install PASETO :
+          go get -u github.com/o1egl/paseto
+
+      - crate paseto maker :
+
+      - create test function for PASETO maker to make sure it works properly :
+
+[21]  Implement login user API that returns PASETO or JWT access token in Go
+  - add token symetric key and access token duration to env file and config :
+    # pass to server through newserver parameter
+
+  - add newPasetoMaker to server API (server.go) :
+
+  - add newTestServer in main_test in api to use in testing later:
+
+  - update testing api to new NewServer parameter for config :
+
+  - add new handler API for user login that implement token based authentication and also hash password :
+
+  - register new handler to route in server :
+
+  - because NewServer is getting more complicated now, it's better to refactor this function :
+
+[22] Implement authentication middleware and authorization rules in golang gin 
+  - create  authentication middleware for api :
+
+      - write an unit test :
+
+      - update CreateToken functions to return payload for test purpose :
+          - update test function related to this CreateToken update :
+          - update user handler api :
+  
+  - add midleware to ther server in setup router function :
+
+  - add authorization for each specific API handler (lihat : go-backend-auth) :
+      #  a logged-in user hanya bisa membuat akun untuk dirinya sendiri
+      #  a logged-in user hanya bisa mendapatkan akun yang merupakan punyanya sendir
+      #  a logged-in user hanya bisa mendapatkan list akun yang merupakan punyanya sendiri
+      #  a logged-in user hanya bisa transfer uang dari dan miliknya sendir
+
+    - update query function to get and list only items that belong to user in token payload :
+      - run make sqlc :
+      - run make mock :
+      - update sqlc testing to adapt with new query function update : 
+
+
+  - update api testing function / mock to adapt with new auth middleware :
+
+[23] Build a minimal Golang docker image with a multistage Dockerfile
+  # never push directly into master branch
+  # new feature need separate branch from master and only merge it back after the new code is properly tested and reviewed
+
+  - create new branch :
+      git checkout -b ft/docker
+
+  - create new Dockerfile to create golang backend docker image :
+
+  - run to build :
+      sudo docker build --tag simplebank:gin.http.1.0 .
+
+[24] connect containers in the same docker network 
+  
+
+  - create network to connect golang backend contaner with postgress container :
+    sudo docker network create simpe-bank-network
+
+  - connect container to network :
+    sudo docker network connect simple-bank-network pgsql
+    sudo docker network connect simple-bank-network simplebank
+
+  - create and run golang backend container :
+    sudo docker container run --name simplebank --network simple-bank-network -p 8080:8080 -e DB_SOURCE="postgresql://tech_school:21204444@pgsql:5432/simple_bank?sslmode=disable" simplebank:gin.http.1.0
+
+    for running in release mode add -e GIN_MODE=release :
+        sudo docker container run --name simplebank --network simple-bank-network -p 8080:8080 -e GIN_MODE=release -e DB_SOURCE="postgresql://tech_school:21204444@pgsql:5432/simple_bank?sslmode=disable" simplebank:gin.http.1.0
+
+  - update Makefile on postgress comman to immediately connect with docker network. add --network simple-bank-network :
+        createpgcontainer: sudo docker container create --network simple-bank-network --name pgsql -p 5432:5432 -e POSTGRES_USER=tech_school -e POSTGRES_PASSWORD=21204444 postgres:15.4-alpine3.18
