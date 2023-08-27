@@ -492,3 +492,29 @@
 
   - update Makefile on postgress comman to immediately connect with docker network. add --network simple-bank-network :
         createpgcontainer: sudo docker container create --network simple-bank-network --name pgsql -p 5432:5432 -e POSTGRES_USER=tech_school -e POSTGRES_PASSWORD=21204444 postgres:15.4-alpine3.18
+
+[48] run DB migrations directly inside Golang code
+  - install golang migrate package :
+      go get github.com/golang-migrate/migrate/v4
+  
+  - add db migration url to env and also update config tool struct:
+
+  - update main.go to run db migration after config loaded :
+
+  
+
+[25] write docker compose file and  
+  - setup wait.sh to make golang backend container wait postgres container to complete :
+      # source : https://github.com/eficode/wait-for
+       - download wait-for file and rename it wait-for.sh :
+       - make it executable :
+          chmod +x wait-for.sh
+      
+  - copy wait-for.sh file to final docker image in dockerfile :
+
+  - add entrypoint in dockerfile :
+
+  # dengan menggunakan compose kita tidak perlu setup network lagi karena container yang dihasilkan otomatis dibuatkan dan container akan ditempatkan pada network yang sama
+  - write docker-compose.yaml :
+
+  - run docker compose up :

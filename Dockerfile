@@ -30,6 +30,8 @@ WORKDIR /app
 # copy executable binary file from the BUILDER STAGE To this run stage image, path to the file we want to copy, target location the final image to copied that file to
 COPY --from=build-binary /app/main .
 
+COPY wait-for.sh .
+
 # app.env ini hanya untuk dev saja tidak untu production. ini hanya sekedar contoh
 COPY app.env . 
 
@@ -42,4 +44,5 @@ EXPOSE 8080
 
 # define the default command  to run when the container done
 # dalam kasus ini kita hanya ingin menjalankan executable file yang kita buat di langkah sebelumnya jadi hanya ada ssatu nilai didalam kurung kurawal
-CMD ["/app/main"]
+# CMD ["/app/main"] // sudah dioverride pada docker-compose
+# ENTRYPOINT [ "/app/start.sh" ]

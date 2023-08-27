@@ -4,6 +4,11 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // subpackage untuk database postgres dari modul migrate
+
+	// _ "github.com/golang-migrate/migrate/v4/source/github"  // ubah /github menjadi /file karena sumber migrate kita berada di local file system
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/tech_school/simple_bank/api"
 	db "github.com/tech_school/simple_bank/db/sqlc"
 	"github.com/tech_school/simple_bank/utils/conf"
@@ -29,6 +34,8 @@ func main() {
 		log.Fatal("tidak bisa terkoneksi dengan database : ", err)
 	}
 
+	runDBMigration(config.MigrationURL, config.DBSource)
+
 	store := db.NewStore(conn)
 
 	server, err := api.NewServer(config, store)
@@ -40,4 +47,22 @@ func main() {
 	if err != nil {
 		log.Fatal("Tidak bisa memulai server : ", err)
 	}
+}
+
+func runDBMigration(migrationUrl string, dbSource string) {
+	migration, err := migrate.New(migrationUrl, dbSource) // return migration object
+	if err != nil {
+		log.Fatal("tidak bisa membuat instansiasi migrate : ", err)
+	}
+
+	if err := migration.Up(); err != nil {
+		if err == migrate.ErrNoChange {
+			log.Println("tidak ada perubahan pada schema migration")
+		} else {
+			log.Fatal("gagal menjalankan migrate up : ", err)
+		}
+	} // run all the migration up files
+
+	// jika tidak ada error yang muncul
+	log.Println("db migration berhasil dijalankan")
 }
