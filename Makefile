@@ -8,7 +8,7 @@ dropdb:
 	sudo docker container exec -it pgsql dropdb --username=tech_school simple_bank
 
 migrateup:
-	migrate -path db/migration -database "postgresql://tech_scFhool:21204444@localhost:5432/simple_bank?sslmode=disable" -verbose up
+	migrate -path db/migration -database "postgresql://tech_school:21204444@localhost:5432/simple_bank?sslmode=disable" -verbose up
 
 migrateup1:
 	migrate -path db/migration -database "postgresql://tech_school:21204444@localhost:5432/simple_bank?sslmode=disable" -verbose up 1
