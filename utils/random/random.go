@@ -103,7 +103,7 @@ func RandomPerson() RdPerson {
 
 	if country == "USA" {
 		lastName = us[rng.Intn(len(us))]
-		balance = RandomInt(100, 1_000)
+		balance = RandomInt(1_000, 10_000)
 		currency = curr.USD
 	} else if country == "Russia" {
 		lastName = rn[rng.Intn(len(rn))]

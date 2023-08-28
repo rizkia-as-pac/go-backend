@@ -8,6 +8,7 @@ import (
 
 type Store interface {
 	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
 	TransferTxV2(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
 }
 
@@ -145,7 +146,7 @@ func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tr
 	return result, err
 }
 
-// TransferTx yang sudah menghandle adanya deadlock
+// TransferTxV2 yang sudah menghandle adanya deadlock
 func (store *SQLStore) TransferTxV2(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 

@@ -1,7 +1,7 @@
 package api
 
 import (
-	"bytes"	
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 	mockdb "github.com/tech_school/simple_bank/db/mock"
 	db "github.com/tech_school/simple_bank/db/sqlc"
@@ -197,9 +198,143 @@ func TestGetAccountAPI(t *testing.T) {
 
 }
 
+func TestCreateAccountAPI(t *testing.T) {
+	user, _ := randomUser(t)
+
+	arg := db.CreateAccountParams{
+		Owner:    user.Username,
+		Balance:  0,
+		Currency: random.RandomCurrency(),
+	}
+
+	testCases := []struct {
+		name          string
+		reqBody       gin.H
+		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
+		buildStubs    func(store *mockdb.MockStore)
+		checkResponse func(store *testing.T, responseRecorder *httptest.ResponseRecorder)
+	}{
+		{
+			name: "Ok",
+			reqBody: gin.H{
+				"currency": arg.Currency,
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					CreateAccount(gomock.Any(), gomock.Eq(arg)).
+					Times(1).
+					Return(db.Account{
+						Owner:    arg.Owner,
+						Balance:  arg.Balance,
+						Currency: arg.Currency,
+					}, nil)
+			},
+			checkResponse: func(store *testing.T, responseRecorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, responseRecorder.Code)
+				requireBodyMatchAccount(t, responseRecorder.Body, db.Account{
+					Owner:    arg.Owner,
+					Balance:  arg.Balance,
+					Currency: arg.Currency,
+				})
+			},
+		},
+		{
+			name: "NoAuthorization",
+			reqBody: gin.H{
+				"currency": arg.Currency,
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					CreateAccount(gomock.Any(), gomock.Eq(arg)).
+					Times(0)
+			},
+			checkResponse: func(store *testing.T, responseRecorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, responseRecorder.Code)
+			},
+		},
+		{
+			name: "InvalidRequest",
+			reqBody: gin.H{
+				"currency": "invalid",
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					CreateAccount(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(store *testing.T, responseRecorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, responseRecorder.Code)
+			},
+		},
+		{
+			name: "InternalServerError",
+			reqBody: gin.H{
+				"currency": arg.Currency,
+			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					CreateAccount(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.Account{}, sql.ErrConnDone)
+			},
+			checkResponse: func(store *testing.T, responseRecorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, responseRecorder.Code)
+			},
+		},
+	}
+
+	for i, _ := range testCases {
+		testCase := testCases[i]
+
+		t.Run(testCase.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+
+			// start test http server and send request
+			server := newTestServer(t, store)
+
+			// BUILD STUBS
+			testCase.buildStubs(store)
+
+			// httpnewrecorder berfungsi untuk merecord response of the api request
+			responseRecorder := httptest.NewRecorder()
+
+			// marshall data to json (like json_encode)
+			marshalled, _ := json.Marshal(testCase.reqBody)
+
+			// http.NewRequest(method, url,requestbody)
+			request, err := http.NewRequest(http.MethodPost, "/accounts", bytes.NewReader(marshalled))
+			require.NoError(t, err)
+
+			testCase.setupAuth(t, request, server.tokenMaker)
+
+			// function dibawah mengirim request melalui server router dan merecord responsenya di recorder
+			server.routers.ServeHTTP(responseRecorder, request)
+
+			// CHECK
+			testCase.checkResponse(t, responseRecorder)
+		})
+
+	}
+
+}
+
 func randomAccount(owner string) db.Account {
 	return db.Account{
-		ID:       random.RandomInt(1, 1000),
+		ID:       random.RandomInt(100, 100000),
 		Owner:    owner,
 		Balance:  random.RandomMoney(),
 		Currency: random.RandomCurrency(),
@@ -211,10 +346,10 @@ func requireBodyMatchAccount(t *testing.T, body *bytes.Buffer, inputAccount db.A
 	data, err := io.ReadAll(body)
 	require.NoError(t, err)
 
-	var getAccount db.Account
+	var gotAccount db.Account
 	// unmarshal data to getAccount object
-	err = json.Unmarshal(data, &getAccount)
+	err = json.Unmarshal(data, &gotAccount)
 	require.NoError(t, err)
 
-	require.Equal(t, inputAccount, getAccount)
+	require.Equal(t, inputAccount, gotAccount)
 }

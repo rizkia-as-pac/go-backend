@@ -65,7 +65,6 @@ func (server *Server) setupRouter() {
 	// tidak perlu uri, kita akan mendapatkan req data dari query params
 	authRoutes.GET("/accounts", server.listAccounts)
 	authRoutes.POST("/transfers", server.transferMoneyTechSchool)
-	
 
 	server.routers = router
 }

@@ -16,7 +16,7 @@ type createAccountRequest struct {
 	// binding:"required" digunakan untuk memberi tahu bahwa properti ini wajib di isi
 	// oneof=RUB RP USD properti ini hanya bisa di isi oleh salah satu dari nilai berikut
 	// Owner    string `json:"owner" binding:"required"` // owner akan didapatkan dari auth payload
-	Currency string `json:"currency" binding:"required,currency`
+	Currency string `json:"currency" binding:"required,currency"`
 }
 
 func (server *Server) createAccount(ctx *gin.Context) {
