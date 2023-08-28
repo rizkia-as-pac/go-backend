@@ -518,3 +518,11 @@
   - write docker-compose.yaml :
 
   - run docker compose up :
+
+[1.1] continue writing test
+  - write new testing
+  - make new mock
+    - install :
+      github.com/jackc/pgx/v5
+
+  - update createUser API handler

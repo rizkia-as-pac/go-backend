@@ -1,0 +1,9 @@
+{
+    "editor.tokenColorCustomizations": {
+        "[Monokai]": {
+            "comments": "#929e7e"
+        },
+        "comments": "",
+        "textMateRules": []
+    }
+}

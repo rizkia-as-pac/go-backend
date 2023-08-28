@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,7 +13,7 @@ import (
 type tranferTXRequest struct {
 	FromAccountID int64  `json:"from_account_id" binding:"required,min=1"`
 	ToAccountID   int64  `json:"to_account_id" binding:"required,min=1"`
-	Currency      string `json:"currency" binding:"required,currency`
+	Currency      string `json:"currency" binding:"required,currency"`
 	Amount        int64  `json:"amount" binding:"required,gt=0"` // greather than 0, memungkinkan mengirimkan 0,5 dollar
 }
 
@@ -61,7 +60,7 @@ func (server *Server) transferMoneyTechSchool(ctx *gin.Context) {
 func (server *Server) validateAccount(ctx *gin.Context, accountID int64, currency string) (db.Account, bool) {
 	account, err := server.store.GetAccount(ctx, accountID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrRecordNotFound) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return account, false
 		}
