@@ -49,7 +49,7 @@ func main() {
 
 	// runGinServer(config,store) // gin server
 
-	// go runGatewayServer(config, store) // go membuat run gateway berjalan di routine yang berbeda. runGatewayerver dan runGRPCServer berjalan pada routine yang sama maka server yang pertama akan memblock server yang kedua, sehingga kita harus memisahkan nya dari main go  routine dengan go routine yang lain
+	go runGatewayServer(config, store) // go membuat run gateway berjalan di routine yang berbeda. runGatewayerver dan runGRPCServer berjalan pada routine yang sama maka server yang pertama akan memblock server yang kedua, sehingga kita harus memisahkan nya dari main go  routine dengan go routine yang lain
 	runGRPCServer(config, store)
 
 }
