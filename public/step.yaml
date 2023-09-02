@@ -741,3 +741,12 @@
     -  setup metadata.go :
 
     - update loginUser gapi handler to return UserAgent and ClientIP : 
+
+[47] Validate gRPC parameters and send human/machine friendly response
+
+    - create separate package for input data validation to keep gapi package stay clean:
+
+    - add error.go in gapi to store grpc server errors and refactor some function :
+
+    - implement valitador to gapi rpcs to check eacch request field :
+
