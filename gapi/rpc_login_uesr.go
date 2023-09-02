@@ -39,12 +39,13 @@ func (server *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (
 		return nil, status.Errorf(codes.Internal, "failed to create access token : %s", err)
 	}
 
+	mtdt := server.extractMetadata(ctx)
 	arg := db.CreateSessionParams{
 		ID:           RTPayload.ID,
 		Username:     req.GetUsername(),
 		RefreshToken: refreshToken,
-		UserAgent:    "",
-		ClientIp:     "",
+		UserAgent:    mtdt.UserAgent,
+		ClientIp:     mtdt.ClientIP,
 		IsBlocked:    false,
 		ExpiredAt:    RTPayload.ExpiredAt,
 	}

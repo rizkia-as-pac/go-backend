@@ -727,3 +727,17 @@
                 proto/*.proto
 
     - setup and run HTTP gateway in main.go :
+
+[44] extract info from gRPC metadata 
+    # mengekstrak metadata dari grpc
+    # metadata is some information about particular RPC call.
+    # in form of list key - value pairs.
+    # let client provide extra information assosiated with the call to the server and vice versa.
+
+    # kita akan menggunakan metadata untuk mengakses user agent dan IP address dari client
+
+    # jika kita menggunakan Gateway yang mana akan menghasilkan server GRPC dan HTTP maka metadata bisa saja di store dalam format yang berbeda
+
+    -  setup metadata.go :
+
+    - update loginUser gapi handler to return UserAgent and ClientIP : 
