@@ -529,7 +529,7 @@
 
 [26] Create a free tier AWS account to deploy application
 
-[27] Auto build & push docker image to AWS ECR with github Actions
+[27] Auto build & push docker image to AWS ECR with github Actions (PAUSED)
   - create a repository in AWS ECR to store our docker images :
     # ECR is a fuly-managed docker container registry that make it easy to store, manage, and deploy docker container images.
 
@@ -547,5 +547,183 @@
   - create new workflow (deploy.yml) :
       # we will use this workflow to build docker image and later deploy it to production
 
+
+[37] manage user session with refresh token - Golang
+
+    - add new env var to store Refresh token duration, and update config.file :
+
+    - run new migration to create new scheme for new session table in the database :
+        migrate create -ext sql -dir db/migration -seq add_sessions
+    
+    - define new session table up and down schema :
+
+    - run migrate up :
+
+    - add new SQL queries to create and retrive a session. :
+
+    - run make sqlc  :
+        re run make mock to update mock :
+
+        re run make test : 
+            #  to make sure everything is run as expected
+      
+    - modify login gin  api to create, store the refresh token in db and return the refresh token together with access token :
+
+        - update api test function to addapt new modification :
+
+    - add new api to renew the access token when it expires but refresh token not expires yet (token.go) :
+
+    - new renew access token api handler as a new route in the server.go file :
+
   
   
+[39] intro to GRPC
+    #  When it comes to performance, HTTP JSON APIs are no match for gRPC
+
+    #  Why GRPC
+
+    # 1. Automatic code generation
+        #  Codes that serialize / deserialize data, or transfer data between client & server are automatically generated
+
+    # 2. Strong API Contract
+        # Server & client share the same protobuf RPC definition with strongly typed data
+
+    # 3. High performance
+        # HTTP/2 : binary framing, multiplexing, header comporession, bidirectional communication
+
+    #  GRPC GATEWAY
+    #  server both GRPC and HTTP request at once
+        # - A plugin of protobuf compiler 
+        # - Generate HTTP proxy codes from protobuf 
+        # - Trnaslate HTTP JSON calls to gRPC 
+        #     - in-process translation : only for unary 
+        #     - separate proxy server : both unary and streaming 
+        # - write code once, serve both gRPC and HTTP request
+
+
+[40] Define gRPC API and generate Go code with protobuf
+  #  https://grpc.io/docs/languages/go/quickstart/
+    - install protobuf compiler : 
+        $ apt install -y protobuf-compiler
+        $ protoc --version  # Ensure compiler version is 3+
+    
+    - to generate golang code, we have to install go plugin for the compiler :
+        $ go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+        $ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
+
+        to check it :
+            protoc-gen-go --version
+            protoc-gen-go-grpc --version
+ 
+    - write protbuf definition for api (inside proto) : 
+      # Protocol buffer documentation: https://protobuf.dev/programming-guides/proto3/
+      - defined user object using protobufer :
+        # its like a custom data type
+
+    - add to setting.json in vscode to setting path:
+        "protoc": {
+            "options": [
+                "--proto_path=proto",
+            ]
+        },
+
+
+    - define object request and response for RPC (create user API) :
+
+    - declare a gRPC service and add the RPC definition of that API:
+
+    - generating Golang codes from service definition that we already create before : 
+
+      -  add to makefile and run : 
+          $ protoc --go_out=. --go_opt=paths=source_relative \
+          --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+          helloworld/helloworld.proto
+
+      - run go mod tidy to fix all packages problem in generated code :
+
+[41] run a golang gRPC server and call it API
+
+    - create gapi folder :
+
+    - setup server :
+        # same as http api server. the difference is we're gonna serve gRPC request instead of http
+
+    - start the server to listen to gRPC requests on a specific port :
+        - update app.env and config util to add new GPRC server address :
+
+
+    - update main.go to start GRPC server instead of HTTP server :
+
+    - start the server :
+        run :
+            make server
+            
+
+    - install evans, grpc client cli tool :
+
+        - install locally :
+            go install github.com/ktr0731/evans@latest
+        
+        # prefer menggunakan docker 
+        - add in make file :
+            evans --host localhost --port 9090 -r repl
+
+    - evans commands :
+        show service
+        call CreateUser
+
+[42] Implement gRPC API to create and login users in Go
+    # it would be very similar to what we've implemented before for gin api
+
+    - define each RPC function in SimpleBankServer interface  : 
+
+[43] grpc GateWay. Write code once, serve both gRPC & HTTP requests.
+
+    - install the build tools for GRPC Gateway :
+        go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
+        go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
+        go get google.golang.org/grpc/cmd/protoc-gen-go-grpc
+
+        go install \
+          github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
+          github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
+          google.golang.org/protobuf/cmd/protoc-gen-go \
+          google.golang.org/grpc/cmd/protoc-gen-go-grpc
+
+    - download these and :
+        https://github.com/googleapis/googleapis.git
+        
+        - download and unzip :
+
+        - mkdir -p google/api folder inside proto folder :
+
+        - go to google/api folder :
+
+        - copy all this to the google/api :
+            google/api/annotations.proto
+            google/api/field_behavior.proto
+            google/api/http.proto
+            google/api/httpbody.proto    
+
+
+    - add the option google.api.http inside the body of the RPC definition in service in proto :
+      #  where we can customize the method, the path, and the body
+
+    - update protoc  command in makefile so that it will generate both the stubs for gRPC as well as the gateway :
+
+          rm -f pb/*.go
+        protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+                --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+                proto/*.proto
+
+          to
+
+
+        rm -f pb/*.go
+        protoc -I . --grpc-gateway_out=pb ./gen/go \ 
+        --grpc-gateway_opt paths=source_relative \
+        --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+                --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+                proto/*.proto
+
+    - setup and run HTTP gateway in main.go :

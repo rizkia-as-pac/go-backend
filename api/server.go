@@ -51,6 +51,8 @@ func (server *Server) setupRouter() {
 
 	router.POST("/users", server.createUser)
 	router.POST("/users/login", server.loginUser)
+	router.POST("/tokens/renew_access", server.renewAccessToken)
+	
 
 	// daripada router. kita gunkan authRoutes untuk memasukan kedalam group route. skrng semua ruoute di group tersebut akan berbagi middleware yang sama
 	// smua request yang masuk rute ini akan melewati middleware terlebih dahulu

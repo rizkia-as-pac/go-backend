@@ -1,0 +1,28 @@
+syntax = "proto3"; 
+package pb; 
+option go_package = "github.com/tech_school/simple_bank/pb";
+
+import "rpc_create_user.proto";
+import "rpc_login_user.proto";
+import "google/api/annotations.proto";
+
+service SimpleBank {
+    // UNARY
+    // an rpc definition
+    rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {
+        // custom setting diletakan didalam sini
+        option (google.api.http) = {
+            // specify the route. v1 adlah versi api. it's best practice to have api versioning
+            post: "/v1/create_user"
+            // parameter dari request akan di kirimkan ke body
+            body: "*"
+        };
+    }
+
+    rpc LoginUser (LoginUserRequest) returns (LoginUserResponse) {
+        option (google.api.http) = {
+            post: "/v1/login_user"
+            body: "*"
+        };
+    }
+}

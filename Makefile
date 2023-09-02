@@ -36,6 +36,29 @@ server:
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/tech_school/simple_bank/db/sqlc Store
 
+# https://grpc.io/docs/languages/go/quickstart/
+# rm -f pb/*.go = hapus semua go code yang ada di pb sebelum generate yang baru
+# proto:
+# 	rm -f pb/*.go
+# 	rm -f doc/swagger/*.swagger.json
+# 	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+#     --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+# 	--grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \
+# 	--openapiv2_out=doc/swagger --openapiv2_opt=allow_merge=true,merge_file_name=bank_mandiri \
+#     proto/*.proto 
+# *.proto karena kita mau generate dari semua proto file yang ada difile proto
+proto:
+	rm -f pb/*.go
+	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+          --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+		  --grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \
+          proto/*.proto
+
+
+evans:
+	evans --host localhost --port 9090 -r repl
+
+
 #  delete from transfers; delete from entries ; delete from accounts ; delete from users ;
 
-.PHONY: createpgcontainer createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlcinit sqlcgenerate test server mock
+.PHONY: createpgcontainer createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlcinit sqlcgenerate test server mock proto evans

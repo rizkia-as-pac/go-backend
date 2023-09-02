@@ -1,0 +1,18 @@
+syntax = "proto3"; 
+package pb; 
+option go_package = "github.com/tech_school/simple_bank/pb"; // memberitahu protoc which golang package yang kita ingin generate kodenya. TAMBAHKAN PB SUFFIX generate code akan ada di folder pb
+
+import "user.proto";
+
+// This will be the object that contains the request to create a new user from the client.
+message CreateUserRequest {
+    string username = 1;
+    string password = 2;
+    string full_name = 3;
+    string email = 4;
+}
+
+// This will be the object that contains information of created user
+message CreateUserResponse {
+    User user = 1 ;
+}
