@@ -1,0 +1,18 @@
+syntax = "proto3"; // tell compiler that we use protobuf syntax version 3 to define our mesagges
+
+package pb; // package is just the way to group multiple protobuf file of the same topic together
+
+option go_package = "github.com/tech_school/simple_bank/pb"; // memberitahu protoc which golang package yang kita ingin generate kodenya. TAMBAHKAN PB SUFFIX generate code akan ada di folder pb
+
+import "google/protobuf/timestamp.proto";
+
+message User {
+    // tipe data, nama field, = nomor field
+    // nomor field penting di probuf that will use to uniquely identify the field when serialize and deserialize in binary format
+    string username = 1;
+    string full_name = 2;
+    string email = 3;
+    // time.Time tipe data nya tidak ada di protobuf tapi google memilki package nya
+    google.protobuf.Timestamp password_changed_at = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
