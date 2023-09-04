@@ -566,6 +566,8 @@
 
         re run make test : 
             #  to make sure everything is run as expected
+
+        add new test for new session.sql.go :
       
     - modify login gin  api to create, store the refresh token in db and return the refresh token together with access token :
 
@@ -750,3 +752,39 @@
 
     - implement valitador to gapi rpcs to check eacch request field :
 
+[49] Partial update DB record with SQLC nullable parameters
+
+    - add new SQL query function to update user this query implement partial update:
+    # this query are implement nullable parameter.
+    # for more detail : https://docs.sqlc.dev/en/latest/howto/named_parameters.html#nullable-parameters
+
+    # coalesce(first,sec) = adalah function dari postgres yang akan mengembalikan nilai parameter pertama jika ada (non null), jika tidak ada kembalikan nilai kedua
+
+    # hashed_password = coalesce(sqlc.narg(hashed_password), hashed_password)
+    # argument pertama adalah nilai baru yang ingin kita input. sqlc.narg memberi custom nama dan juga nullable pada argument tersebut yagn berarti argument tersebut boleh untuk tidak diisi
+    # argument kedua adalah nilai semula dari hashed_password itu sendiri
+
+    # sqlc.arg = memberi nama argument yang wajib diisi
+    # sqlc.narg = memberi nama argument yang tidak wajib diisi
+
+
+        use : 
+            -- name: UpdateUser :one
+              UPDATE users
+              SET
+                hashed_password = coalesce(sqlc.narg(hashed_password), hashed_password),
+                password_changed_at = coalesce(sqlc.narg(password_changed_at), password_changed_at),
+                full_name = coalesce(sqlc.narg(full_name), full_name),
+                email = coalesce(sqlc.narg(email), email)
+              WHERE
+                username = sqlc.arg(username)
+              RETURNING *;
+
+    - run make sqlc :
+    #  untuk generate kode sqlc yang menggunakan sqlc.narg memerlukan sqlc versi terbaru. jadi pastikan sudah menggunakan versi yang terbaru
+
+    - run make mock :
+
+    - write a new unit test for new update user function in user.sql.go and also to learn how to use it:
+
+ 
