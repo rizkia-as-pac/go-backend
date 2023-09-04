@@ -787,4 +787,29 @@
 
     - write a new unit test for new update user function in user.sql.go and also to learn how to use it:
 
- 
+[50] Build gRPC update API with optional parameters
+    # to build update user API
+
+  - make sure protoc version is at least 3.15 :
+  
+  - write proto file that use optional keyword for this new API :
+    # optional tell protoc that this field is not mandatory
+
+      # message UpdateUserRequest {
+      # string username = 1;
+      # optional string full_name = 2; // optional tell protoc that this field isnot mandatory to fill
+      # optional string email = 3;
+      # optional string password = 4;
+      # }
+
+  - add a new RPC to simple bank service :
+      add google api http to add it to gateway server generated code
+
+  - add to make proto script :
+      --experimental_allow_proto3_optional
+
+
+  - run make proto to generate golang code :
+
+  - implement update User GAPI in our GRPC server use new generated code :
+  
