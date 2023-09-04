@@ -22,10 +22,10 @@ migratedown1:
 makeFileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 sqlcinit:
-	sudo docker run --rm -v $(makeFileDir):/src -w /src sqlc/sqlc:1.8.0 init
+	sudo docker run --rm -v $(makeFileDir):/src -w /src sqlc/sqlc:1.19.1 init
 
 sqlcgenerate:
-	sudo docker run --rm -v $(makeFileDir):/src -w /src sqlc/sqlc:1.8.0 generate
+	sudo docker run --rm -v $(makeFileDir):/src -w /src sqlc/sqlc:1.19.1 generate
 
 test:
 	go test -v -cover ./...
