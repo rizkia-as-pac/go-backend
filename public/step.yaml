@@ -813,3 +813,8 @@
 
   - implement update User GAPI in our GRPC server use new generated code :
   
+[51] Add authorization to protect gRPC API
+
+  - setup authorization in authorization.go inside gapi package:
+
+  - apply or implement authorization in GAPI handlers like in update user GAPI :
