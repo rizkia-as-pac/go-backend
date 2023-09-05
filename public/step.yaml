@@ -850,3 +850,54 @@
   - write a separate HTTP logger middleware function in logger.go :
 
   - add it to grpc gateway server in main.go :
+
+[54] Implement background worker in Go with Redis and asynq
+  # Use case : send verification email
+
+  # step 1
+  #  create a new user record in the databaase
+
+  # step 2
+  #   push a send-verification-email task to the Redis queue
+
+  # step 3
+  #   background workder picks up a task from the queue and process it
+
+  - update rpc Create User GAPI :
+          # after calling store to create user to the database we will send verification email to the user.
+          # to do it asynchronously we're gonna use open source called package asynq
+          # it is Simple, reliable & efficient distributed task queue in Go
+
+          # which enable us to enqueue and process task asynchrounously using background workers. it is backed by Redis. and designed to be scalable yet easy to get started.
+
+        # Highlevel overview of how Asynq works:
+
+          # -   Client puts tasks on a queue (we can define multiple queues with different priorities)
+          # -   Server pulls tasks off queues and starts a worker goroutine for each task
+          # -   Tasks are processed concurrently by multiple workers
+          
+        #   Task queues are used as a mechanism to distribute work across multiple machines. A system can consist of multiple worker servers and brokers, giving way to high availability and horizontal scaling.
+
+        # !!!!! untuk sekarang package ini masih dalam tahap pengembangan. so you should be prepared for some breaking API changes, !!!!
+
+      - install the package :
+          go get -u github.com/hibiken/asynq
+
+      
+
+  - create worker folder in root and setup distributor (task creation) :
+      # this file will contain the codes to create tasks distributor and use it to distribute task to the workers via Redis queue.
+
+      - import to the project and run go mod tidy :
+        # agar package asynq tadi berpindah ke direct dependencies
+
+  - create a new file to implement distribute task send verify email (task distribution) :
+      # create a new task and send it to redis queue :
+
+  - setup task processor :
+
+  - create implement processor task send verify email together in task_verify_email.go :
+      # task processor will pickup the task form redis queue and process them.
+
+  - register  processor task send verify email with asynq server inside redis task processor :
+      # thats how we tell asynq the task should be run by which handler function
