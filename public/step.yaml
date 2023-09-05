@@ -845,4 +845,8 @@
     - add ENVIRONTMENT variable to app.env and update config tool :
         # set new env var so we can activated or nonactivated pretty-logging mode based on environtment condition (dev or prod).
 
-        # 
+[53] How to write HTTP logger middleware in Go
+
+  - write a separate HTTP logger middleware function in logger.go :
+
+  - add it to grpc gateway server in main.go :
