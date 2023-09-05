@@ -849,4 +849,4 @@
 
   - write a separate HTTP logger middleware function in logger.go :
 
-  - add it to grpc gateway server in main.go : 
+  - add it to grpc gateway server in main.go :
