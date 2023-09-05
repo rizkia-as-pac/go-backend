@@ -17,6 +17,7 @@ type Config struct {
 	TokenSymmetricKey    string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
 	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
+	Environment          string        `mapstructure:"ENVIRONMENT"`
 }
 
 // LoadConfig membaca configuration dari file jika ada atau environtment variables jika disediakan

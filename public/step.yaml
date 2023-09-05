@@ -818,3 +818,31 @@
   - setup authorization in authorization.go inside gapi package:
 
   - apply or implement authorization in GAPI handlers like in update user GAPI :
+
+[52] Write structured logs for gRPC APIs
+    #  gRPC interceptor adalah function yang dipanggil setiap request, sebelum request itu dikirimkan lagi ke grpc handler untuk diproses
+
+    - setup logger.go and create logger function that implement UnaryServerInterceptor interface :
+
+        - create structured log :
+          # in order to create structured log we will use package called zerolog to help 
+          # this package help us write logs in JSON format with zero alocation
+          # this package use same approach as Uber's zap package but with simpler api and better performance
+
+              - instalation :
+               go get -u github.com/rs/zerolog/log
+
+              - add import zerolog to logger.go and run go mod tidy : 
+
+    - add logger interceptor to the grpc server in main.go :
+
+    - change default golang log package to zerolog log package and update every log in main.go :
+
+    -  add ConsoleWriter option to enable pretty-logging mode :
+        # zerolog good for production but hard to read in development. so add ConsoleWriter option to enable pretty-logging mode
+        #  log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr}) // paste to top main function
+
+    - add ENVIRONTMENT variable to app.env and update config tool :
+        # set new env var so we can activated or nonactivated pretty-logging mode based on environtment condition (dev or prod).
+
+        # 
