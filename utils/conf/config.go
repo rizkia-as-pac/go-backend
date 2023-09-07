@@ -18,6 +18,7 @@ type Config struct {
 	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 	Environment          string        `mapstructure:"ENVIRONMENT"`
+	RedisAddress         string        `mapstructure:"REDIS_ADDRESS"`
 }
 
 // LoadConfig membaca configuration dari file jika ada atau environtment variables jika disediakan
