@@ -4,12 +4,14 @@ import (
 	"context"
 
 	"github.com/hibiken/asynq"
+	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 	db "github.com/tech_school/simple_bank/db/sqlc"
 )
 
 const (
 	QueueCritical = "critical"
-	QueueDefault = "default"
+	QueueDefault  = "default"
 )
 
 type TaskProcessor interface {
@@ -29,8 +31,14 @@ type RedisTaskProcessor struct {
 
 // redis client opt to connect to redis
 func NewRedisTaskProcessor(redisOpt *asynq.RedisClientOpt, store db.Store) TaskProcessor {
+	customLogger := NewCustomLogger()
+	redis.SetLogger(customLogger) // apply custom logger to go-redis package internal logger
+
 	server := asynq.NewServer(
 		redisOpt,
+
+		// asynq.config object allow us to control many different parameters of asynq server. for example  Maximum number of concurrent processing of tasks, retry delay for a failed task, a predicate function to menentukan apakah error yang dikembalikan dari handler adalah sebuah kegagalan atau bukan, a map of task queues together with their priority values, and many more.
+		// for now keep it simple and leave it config empty. yang berarti kita akan menggunakan asynq's predefined default configurations.
 		asynq.Config{
 			// queues map tell asyncq about the queue names and their correspondeing priority values.
 			Queues: map[string]int{
@@ -38,8 +46,23 @@ func NewRedisTaskProcessor(redisOpt *asynq.RedisClientOpt, store db.Store) TaskP
 				QueueDefault:  5,
 				// "low":      1,
 			},
-		}, // asynq.config object allow us to control many different parameters of asynq server. for example  Maximum number of concurrent processing of tasks, retry delay for a failed task, a predicate function to menentukan apakah error yang dikembalikan dari handler adalah sebuah kegagalan atau bukan, a map of task queues together with their priority values, and many more.
-		// for now keep it simple and leave it config empty. yang berarti kita akan menggunakan asynq's predefined default configurations.
+
+			// it is in fact a type conversion, but for function instead of normal variable
+			ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, task *asynq.Task, err error) {
+				log.Error().
+					Err(err).
+					Str("type", task.Type()).
+					Bytes("payload", task.Payload()).
+					Msg("task gagal di proses")
+
+					// you can modif this error handler function to send notification to your email, slack or whatever channel you want
+			}), // add error handler
+
+			Logger: customLogger, // register our custom logger 
+
+
+			// specify a custom logger for the asynq server
+		},
 	)
 
 	return &RedisTaskProcessor{
