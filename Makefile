@@ -28,7 +28,7 @@ sqlcgenerate:
 	sudo docker run --rm -v $(makeFileDir):/src -w /src sqlc/sqlc:1.19.1 generate
 
 test:
-	go test -v -cover ./...
+	go test -v -cover -short ./...
 
 server:
 	go run main.go
