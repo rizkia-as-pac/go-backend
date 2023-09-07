@@ -957,3 +957,39 @@
 
   - use new user transaction in rpc_create_user :
     # use create user transaction to create new user instead of createUser querier to accomodate verify email
+
+[57] How to handle errors and print logs for Go Asynq workers
+
+  - add error hanlder in asynq config in newRediskTaskProcessor function :
+      #  you can modif this error handler function to send notification to your email, slack or whatever channel you want
+
+  Part 2 : force asynq to follow our log format
+
+    - create a new custom  logger struct in worker/logger.go that implement Logger interface from asynq :
+
+        # // Logger supports logging at various log levels.
+        # type Logger interface {
+        #   // Debug logs a message at Debug level.
+        #   Debug(args ...interface{})
+
+        #   // Info logs a message at Info level.
+        #   Info(args ...interface{})
+
+        #   // Warn logs a message at Warning level.
+        #   Warn(args ...interface{})
+
+        #   // Error logs a message at Error level.
+        #   Error(args ...interface{})
+
+        #   // Fatal logs a message at Fatal level
+        #   // and process will exit with status set to 1.
+        #   Fatal(args ...interface{})
+        # }
+
+  - create new customLogger struct object and add into asynq newserver config when create a server in NewRedisTaskProcessor function  :
+
+  - update custom logger with PrintF method so it implement internal.Logging interface from github.com/redis/go-redis/v9 :
+      # implement internal.Logging interface in custom logger so it can be use to customize go-redis package internal logger
+
+  - apply updated custom logger for go-redis package :
+      # go-redis package use by asynq under the hood to talk to the redis
