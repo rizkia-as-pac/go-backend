@@ -2,11 +2,14 @@ package gapi
 
 import (
 	"context"
+	"time"
 
+	"github.com/hibiken/asynq"
 	db "github.com/tech_school/simple_bank/db/sqlc"
 	"github.com/tech_school/simple_bank/pb"
 	"github.com/tech_school/simple_bank/utils/pass"
 	"github.com/tech_school/simple_bank/validator"
+	"github.com/tech_school/simple_bank/worker"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -36,6 +39,8 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		Email:          req.GetEmail(),
 	}
 
+	// TODO : create user and send task to Redis in 1 single DB transaction. if we fail to send task, the tx will rolled back, and the client can retry later.
+	//
 	user, err := server.store.CreateUser(ctx, arg)
 	if err != nil {
 		if db.ErrorCode(err) == db.UniqueViolation {
@@ -44,8 +49,20 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		return nil, status.Errorf(codes.Internal, "gagal untuk membuat user : %s", err)
 	}
 
-	// send verify email to user
-	
+	taskPayload := &worker.PayloadSendVerifyEmail{
+		Username: user.Username,
+	}
+	// send verify email to user (sistributing task)
+	opts := []asynq.Option{
+		asynq.MaxRetry(10), // we only allows task to retried at most 10 times if it fails
+		asynq.ProcessIn(10 * time.Second), // procces task after delay 10 second
+		asynq.Queue(worker.QueueCritical), // sending task to different level of queue based on it importances
+
+	}
+	err = server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to distribute task to send verify email : %s", err)
+	}
 
 	// we should not mix up the DB layer struct with the API struct. because sometimes we don't want to return every field in te DB to the client. that's way we have CreateUserResponse struct and also created ConverUser function
 	res := &pb.CreateUserResponse{

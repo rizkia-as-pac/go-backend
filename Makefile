@@ -59,6 +59,10 @@ evans:
 	evans --host localhost --port 9090 -r repl
 
 
+createrediscontainer:
+	sudo docker create --name rds -p 6379:6379 redis:7.2.0-alpine3.18
+
+
 #  delete from transfers; delete from entries ; delete from accounts ; delete from users ;
 
-.PHONY: createpgcontainer createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlcinit sqlcgenerate test server mock proto evans
+.PHONY: createpgcontainer createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlcinit sqlcgenerate test server mock proto evans createrediscontainer

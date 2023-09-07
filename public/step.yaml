@@ -901,3 +901,45 @@
 
   - register  processor task send verify email with asynq server inside redis task processor :
       # thats how we tell asynq the task should be run by which handler function
+
+[55] Integrate async worker to Go web server
+
+  - run redis server in local machine use docker :
+      docker pull redis:7.2.0-alpine3.18
+
+      - create container :
+        sudo docker create --name rds -p 6379:6379 redis:7.2.0-alpine3.18
+
+      - start container :
+
+      - we can test connection redis :
+        sudo docker container exec -it rds redis-cli ping
+
+        if return PONG it means it ready
+
+  - add new env var for redis server address and update config:
+
+  - create code to connect to redis in main.go :
+    # right before running the server
+        - create redis client option :
+
+        - create a new task distributor :
+
+        - add the distributor to the gRPC server struct :
+          # so it will be avaible to all of its RPC handler function
+
+            - update gapi server struct and NewServer function to store task distributor :
+  
+  - now we can use task distributor to issue a new send verification email task in rpc_create_user.go :
+
+  PART 2 : run the task processor
+
+  - add new function in main.go file to run task processor :
+      - create task processor :
+
+      - run task processor :
+
+  - use it in main function to run task processor in separate go routine :
+
+  
+

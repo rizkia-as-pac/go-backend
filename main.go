@@ -10,6 +10,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // subpackage untuk database postgres dari modul migrate
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/hibiken/asynq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -23,6 +24,7 @@ import (
 	"github.com/tech_school/simple_bank/gapi"
 	"github.com/tech_school/simple_bank/pb"
 	"github.com/tech_school/simple_bank/utils/conf"
+	"github.com/tech_school/simple_bank/worker"
 
 	_ "github.com/lib/pq"
 )
@@ -55,16 +57,41 @@ func main() {
 
 	store := db.NewStore(conn)
 
+	// this asynq.RedisClientOpt object allows us to set up many different parameters to communicate with the Redis server.
+	// asynq.RedisClientOpt use to know how to connect to reddis
+	redisOpt := asynq.RedisClientOpt{
+		Addr: config.RedisAddress,
+		// Username:     "", // username to authenticate the connection // for this lecture we use default value
+		// Password:     "", // password to authenticate the connection // for this lecture we use default value
+		// DB:           0, // redis DB number // for this lecture we use default value
+		// TLSConfig:    &tls.Config{}, // if connect to production redis server that use TLS to secure the connections, you must set appropriate value for this field
+	}
+
+	// create a new task distributor
+	taskDist := worker.NewRedisTaskDistributor(&redisOpt)
+
 	// runGinServer(config,store) // gin server
 
-	go runGatewayServer(config, store) // go membuat run gateway berjalan di routine yang berbeda. runGatewayerver dan runGRPCServer berjalan pada routine yang sama maka server yang pertama akan memblock server yang kedua, sehingga kita harus memisahkan nya dari main go  routine dengan go routine yang lain
-	runGRPCServer(config, store)
+	go runTaskProcessor(redisOpt, store) // run task processor in seprate go routine because when asynq server start it will block and keep plling redis for new tasks like http web server so it block like http server block while waiting request from client.
+	go runGatewayServer(config, store, taskDist) // go membuat run gateway berjalan di routine yang berbeda. runGatewayerver dan runGRPCServer berjalan pada routine yang sama maka server yang pertama akan memblock server yang kedua, sehingga kita harus memisahkan nya dari main go  routine dengan go routine yang lain
+	runGRPCServer(config, store, taskDist)
 
 }
 
-func runGRPCServer(config conf.Config, store db.Store) {
+func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
+	// create task processor
+	taskProcessor := worker.NewRedisTaskProcessor(&redisOpt, store)
+	log.Info().Msg("memulai redis taks processor")
+
+	err := taskProcessor.Start()
+	if err != nil {
+		log.Fatal().Err(err).Msg("gagal memulai redis task processor")
+	}
+}
+
+func runGRPCServer(config conf.Config, store db.Store, td worker.TaskDistributor) {
 	// implementasi server bank mandiri kita  // sama seperti newserver yang ada pad gin
-	server, err := gapi.NewServer(config, store)
+	server, err := gapi.NewServer(config, store, td)
 	if err != nil {
 		log.Fatal().Err(err).Msg("tidak bisa membuat server")
 	}
@@ -101,9 +128,9 @@ func runGRPCServer(config conf.Config, store db.Store) {
 }
 
 // setup HTTP gateway with in-process translation method
-func runGatewayServer(config conf.Config, store db.Store) {
+func runGatewayServer(config conf.Config, store db.Store, td worker.TaskDistributor) {
 	// implementasi server bank mandiri kita  // sama seperti newserver yang ada pad gin
-	server, err := gapi.NewServer(config, store)
+	server, err := gapi.NewServer(config, store, td)
 	if err != nil {
 		log.Fatal().Err(err).Msg("tidak bisa membuat server")
 	}
