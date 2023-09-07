@@ -32,16 +32,34 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		return nil, status.Errorf(codes.Internal, "failed to hash password : %s", err)
 	}
 
-	arg := db.CreateUserParams{
-		Username:       req.GetUsername(),
-		HashedPassword: hashedPassword,
-		FullName:       req.GetFullName(),
-		Email:          req.GetEmail(),
-	}
-
 	// TODO : create user and send task to Redis in 1 single DB transaction. if we fail to send task, the tx will rolled back, and the client can retry later.
 	//
-	user, err := server.store.CreateUser(ctx, arg)
+
+	arg := db.CreateUserTxParams{
+		CreateUserParams: db.CreateUserParams{
+			Username:       req.GetUsername(),
+			HashedPassword: hashedPassword,
+			FullName:       req.GetFullName(),
+			Email:          req.GetEmail(),
+		},
+		AfterCreate: func(user db.User) error {
+			// this is place where we should send asynq task to redis
+
+			// send verify email to user (sistributing task)
+			taskPayload := &worker.PayloadSendVerifyEmail{
+				Username: user.Username,
+			}
+			opts := []asynq.Option{
+				asynq.MaxRetry(10),                // we only allows task to retried at most 10 times if it fails
+				asynq.ProcessIn(10 * time.Second), // procces task after delay 10 second
+				asynq.Queue(worker.QueueCritical), // sending task to different level of queue based on it importances
+
+			}
+			return server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
+		},
+	}
+
+	txResult, err := server.store.CreateUserTx(ctx, arg)
 	if err != nil {
 		if db.ErrorCode(err) == db.UniqueViolation {
 			return nil, status.Errorf(codes.AlreadyExists, "username sudah ada : %s", err)
@@ -49,24 +67,9 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		return nil, status.Errorf(codes.Internal, "gagal untuk membuat user : %s", err)
 	}
 
-	taskPayload := &worker.PayloadSendVerifyEmail{
-		Username: user.Username,
-	}
-	// send verify email to user (sistributing task)
-	opts := []asynq.Option{
-		asynq.MaxRetry(10), // we only allows task to retried at most 10 times if it fails
-		asynq.ProcessIn(10 * time.Second), // procces task after delay 10 second
-		asynq.Queue(worker.QueueCritical), // sending task to different level of queue based on it importances
-
-	}
-	err = server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to distribute task to send verify email : %s", err)
-	}
-
 	// we should not mix up the DB layer struct with the API struct. because sometimes we don't want to return every field in te DB to the client. that's way we have CreateUserResponse struct and also created ConverUser function
 	res := &pb.CreateUserResponse{
-		User: ConvertUser(user),
+		User: ConvertUser(txResult.User),
 	}
 
 	return res, nil
