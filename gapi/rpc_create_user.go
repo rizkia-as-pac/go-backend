@@ -66,7 +66,7 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		}
 		return nil, status.Errorf(codes.Internal, "gagal untuk membuat user : %s", err)
 	}
-
+ 
 	// we should not mix up the DB layer struct with the API struct. because sometimes we don't want to return every field in te DB to the client. that's way we have CreateUserResponse struct and also created ConverUser function
 	res := &pb.CreateUserResponse{
 		User: ConvertUser(txResult.User),

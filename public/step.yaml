@@ -993,3 +993,49 @@
 
   - apply updated custom logger for go-redis package :
       # go-redis package use by asynq under the hood to talk to the redis
+
+[58] A bit of delay might be good for your async tasks
+    # Dalam materi ini, pembicara membahas pentingnya menambahkan keterlambatan (delay) selama 10 detik pada asynq task yang diproses oleh server Redis dalam konteks aplikasi backend. Pembicara mengilustrasikan bahwa tanpa keterlambatan ini, asynq task dapat diproses terlalu cepat, mengakibatkan masalah jika transaksi yang terkait belum selesai. Dia juga menggambarkan kasus-kasus di mana transaksi mungkin memakan waktu lebih lama, dan bagaimana keterlambatan 10 detik memastikan bahwa transaksi berhasil sebelum asynq task diproses. Pembicara juga menyarankan penggunaan retry sebagai solusi jika asynq task diproses sebelum transaksi selesai. Materi ini memberikan pemahaman tentang pentingnya keterlambatan dalam pengelolaan asynq task dalam aplikasi backend yang menggunakan Redis sebagai server pekerja belakang.
+
+[59]  send emails in Go via Gmail
+  # kita akan mengirimkan email dengan bantuan package yang mengimplementasikan SMTP
+  # Simple Mail Transfer Protocol
+
+    - install golang email package email by jordan wright:
+      go get github.com/jordan-wright/email
+
+    - create new folder mail and setup code to send email:
+
+    - run go mod tidy :
+      # because at this point we already use package in code directly
+      # go mod tidy to move package to direct dependencies 
+
+    - generate an app gmail password for programmatic access :
+          - manage your account
+          - security
+          - in order to use app password we have to enable 2-step verification
+          - in  2-step verification page
+          - app password
+              - select app : mail
+              - device : other : Simple Bank
+
+          - copy passsword to app.env :
+
+    - add email sender name, email sender address, email sender password into env var and update config strucct :
+
+    - create test function for this mail :
+
+[60] skip test in Go and config test flag in vscode
+
+    - place short flag check code in test file that we dont want to run when testing :
+      if testing.Short() {
+        t.Skip()
+      }
+
+    - update test command in makefile to just run short test :
+        - set short flag :
+            go test -v -cover -short ./...
+
+    - set VSCode golang test flag if you want :
+      settings > search(go test) > go: Test Flags : eddit in setting json
+      

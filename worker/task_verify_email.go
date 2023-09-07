@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 
@@ -64,10 +63,13 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Cont
 	// retrieve user record from the database
 	user, err := processor.store.GetUser(ctx, payload.Username)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			// jika gagal karna ini maka tidak perlu retry
-			return fmt.Errorf("user tidak ditemukan : %w", asynq.SkipRetry)
-		}
+		// if err == sql.ErrNoRows {
+		// 	// jika gagal karna user tidak ditemukan maka tidak perlu retry
+		// 	return fmt.Errorf("user tidak ditemukan : %w", asynq.SkipRetry)
+		// }
+
+		// akan lebih baik jika kita biarkan lakukan retry, karena bisa jadi error disebabkan transaksi yang lama diproses sehingga user yang dicari belum tersedia.
+		// jikapun transaksi batal dilakukan dan user tidak pernah tersedia. maka retry tidak akan selamanya dilakukan karena retry memililki batas maksimal percobaan
 
 		// in other case there's some internal error with the db, so it's retryable. therefore we simply wrap the original error
 		return fmt.Errorf("gagal mendapatkan user : %w", err)
