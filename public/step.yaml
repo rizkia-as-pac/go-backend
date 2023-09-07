@@ -943,3 +943,17 @@
 
   
 
+[56] Send async tasks to Redis within a DB transaction :
+
+  - refactor transferTxv2 from store to separate files :
+
+  - create file tx_create_user.go in sqlc folder :
+
+      - implement transaction to create a new user :
+
+  - add new created new user transaction to Store interface :
+
+      - run make mock due to new tx in Store interface :
+
+  - use new user transaction in rpc_create_user :
+    # use create user transaction to create new user instead of createUser querier to accomodate verify email
