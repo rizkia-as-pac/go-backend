@@ -7,6 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	db "github.com/tech_school/simple_bank/db/sqlc"
+	"github.com/tech_school/simple_bank/mail"
 )
 
 const (
@@ -27,10 +28,11 @@ type TaskProcessor interface {
 type RedisTaskProcessor struct {
 	server *asynq.Server // RedisTaskProcessor must contain an asynq.server object as one of its field.
 	store  db.Store      // when processing the task it will need database
+	mailer mail.EmailSender
 }
 
 // redis client opt to connect to redis
-func NewRedisTaskProcessor(redisOpt *asynq.RedisClientOpt, store db.Store) TaskProcessor {
+func NewRedisTaskProcessor(redisOpt *asynq.RedisClientOpt, store db.Store, mailer mail.EmailSender) TaskProcessor {
 	customLogger := NewCustomLogger()
 	redis.SetLogger(customLogger) // apply custom logger to go-redis package internal logger
 
@@ -55,11 +57,10 @@ func NewRedisTaskProcessor(redisOpt *asynq.RedisClientOpt, store db.Store) TaskP
 					Bytes("payload", task.Payload()).
 					Msg("task gagal di proses")
 
-					// you can modif this error handler function to send notification to your email, slack or whatever channel you want
+				// you can modif this error handler function to send notification to your email, slack or whatever channel you want
 			}), // add error handler
 
-			Logger: customLogger, // register our custom logger 
-
+			Logger: customLogger, // register our custom logger
 
 			// specify a custom logger for the asynq server
 		},
@@ -68,6 +69,7 @@ func NewRedisTaskProcessor(redisOpt *asynq.RedisClientOpt, store db.Store) TaskP
 	return &RedisTaskProcessor{
 		server: server,
 		store:  store,
+		mailer: mailer,
 	}
 }
 

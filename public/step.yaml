@@ -1038,4 +1038,54 @@
 
     - set VSCode golang test flag if you want :
       settings > search(go test) > go: Test Flags : eddit in setting json
-      
+  
+
+[61] Email verification in Go; design DB and send email
+    #  IDEA
+    # - for each new user we'll generate a random secret code and store it in a DB table
+    # - code also send to user's registered email. together with a link to a page on our website to verification 
+    # - if the user really own the email address, they would be able to access the page with the correct secret code, and thus the email will be verified.
+
+    - update database :
+        # Just use dbdiagram.io update dbdiagram schema and export it as psql 
+          - update user table : add is email verified column
+          - add new table verify_emails :
+              #  this table will store the secret code and all necessary information about the email we send to the user.
+
+    - update makefile to create new migration version easily :
+          newmigrate:
+	              migrate create -ext sql -dir db/migration -seq $(name)
+          
+          - to run it :
+          make newmigrate name=add_verify_emails
+
+    - define migrate up schema :
+
+    - run make migrate up to apply newer migration:
+          # ini mungkin akan error, karena kita sudah punya list akun sebelumnya sudah ada namun tidak terkait dengan owner manapun. error constraint
+
+          # error ini membuat schmea migrations table pada db kita berada pada kondisi dirty, hal ini membuat kita tidak dapat menjalankan migrate down. untuk memperbaikinya kita hanya perlu secara manual mengubah nilai dirty menjadi false. setelah itu kita bisa melakukan mig down
+          
+              - lakukan migrate down :
+              - dan jalankan migrate up lagi : 
+                # kini sudah ada table user yang baru ditambahkan
+
+    - define migrate down schema :
+      # when writing the migration down, we should reverse what were done in the migration up.
+        - run mig down 1 to test it :
+
+    
+    - write a query to create a new verify email and also update it:
+
+    - run make sqlc generate golang code for query :
+
+    - run make mock :
+
+    - add mailer field in RedisTaskProcessor struct and update NewRedisTaskProcessor function parameter to receive mailer :
+
+    - use db query method we've just added to create a new verify email record in the database in procecorTaskSendVerifyEmail :
+
+    - update main.go file :
+        update to create mailer and pass it to NewRedisTaskProcessor function in runTaskProcessor :
+
+    
