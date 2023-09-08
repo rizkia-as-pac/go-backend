@@ -22,6 +22,7 @@ import (
 	"github.com/tech_school/simple_bank/api"
 	db "github.com/tech_school/simple_bank/db/sqlc"
 	"github.com/tech_school/simple_bank/gapi"
+	"github.com/tech_school/simple_bank/mail"
 	"github.com/tech_school/simple_bank/pb"
 	"github.com/tech_school/simple_bank/utils/conf"
 	"github.com/tech_school/simple_bank/worker"
@@ -72,15 +73,16 @@ func main() {
 
 	// runGinServer(config,store) // gin server
 
-	go runTaskProcessor(redisOpt, store) // run task processor in seprate go routine because when asynq server start it will block and keep plling redis for new tasks like http web server so it block like http server block while waiting request from client.
+	go runTaskProcessor(config, redisOpt, store) // run task processor in seprate go routine because when asynq server start it will block and keep plling redis for new tasks like http web server so it block like http server block while waiting request from client.
 	go runGatewayServer(config, store, taskDist) // go membuat run gateway berjalan di routine yang berbeda. runGatewayerver dan runGRPCServer berjalan pada routine yang sama maka server yang pertama akan memblock server yang kedua, sehingga kita harus memisahkan nya dari main go  routine dengan go routine yang lain
 	runGRPCServer(config, store, taskDist)
 
 }
 
-func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
+func runTaskProcessor(conf conf.Config, redisOpt asynq.RedisClientOpt, store db.Store) {
+	gmailSender := mail.NewGmailSender(conf.EmailSenderName, conf.EmailSenderAddress, conf.EmailSenderPassword)
 	// create task processor
-	taskProcessor := worker.NewRedisTaskProcessor(&redisOpt, store)
+	taskProcessor := worker.NewRedisTaskProcessor(&redisOpt, store, gmailSender)
 	log.Info().Msg("memulai redis taks processor")
 
 	err := taskProcessor.Start()

@@ -7,6 +7,9 @@ createdb:
 dropdb:
 	sudo docker container exec -it pgsql dropdb --username=tech_school simple_bank
 
+newmigrate:
+	migrate create -ext sql -dir db/migration -seq $(name)
+
 migrateup:
 	migrate -path db/migration -database "postgresql://tech_school:21204444@localhost:5432/simple_bank?sslmode=disable" -verbose up
 
@@ -63,6 +66,6 @@ createrediscontainer:
 	sudo docker create --name rds -p 6379:6379 redis:7.2.0-alpine3.18
 
 
-#  delete from transfers; delete from entries ; delete from accounts ; delete from users ;
+#  delete from verify_emails ;delete from sessions; delete from transfers; delete from entries ; delete from accounts ; delete from users ;
 
-.PHONY: createpgcontainer createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlcinit sqlcgenerate test server mock proto evans createrediscontainer
+.PHONY: createpgcontainer createdb dropdb newmigrate migrateup migratedown migrateup1 migratedown1 sqlcinit sqlcgenerate test server mock proto evans createrediscontainer

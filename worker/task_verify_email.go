@@ -7,6 +7,8 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
+	db "github.com/tech_school/simple_bank/db/sqlc"
+	"github.com/tech_school/simple_bank/utils/random"
 )
 
 // type name
@@ -76,6 +78,12 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Cont
 
 	}
 
+	//CREATE EMAIL VERIFY IN DB AND SEND IT
+	err = createAndSendEmail(ctx, user, processor)
+	if err != nil {
+		return err
+	}
+
 	// if no error occurs, then we can send email to the user here
 	log.Info().
 		Str("type", task.Type()).
@@ -84,4 +92,46 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Cont
 		Msg("sedang memproses task") // for now just write log here TEMP
 
 	return nil // tell asynq that task has ben processed successfully
+}
+
+func createAndSendEmail(ctx context.Context, user db.User, processor *RedisTaskProcessor) error {
+	arg := db.CreateVerifyEmailParams{
+		Username:   user.Username,
+		Email:      user.Email,
+		SecretCode: random.RandomString(32, "abcdefghijklmnopqrstuvwxyz1234567890"),
+	}
+
+	verifyEmail, err := processor.store.CreateVerifyEmail(ctx, arg)
+	if err != nil {
+		return fmt.Errorf("gagal membuat email verifikasi : %w", err)
+	}
+
+	subject := "Welcome to Simple Bank"
+
+	// TODO: replace this URL with an environment variable that points to a front-end page
+	verifyUrl := fmt.Sprintf(
+		"http://localhost:8080/v1/verify_email?email_id=%d&secret_code=%s",
+		verifyEmail.ID,
+		verifyEmail.SecretCode,
+	)
+
+	content := fmt.Sprintf(
+		`Hello %s,<br/>
+	Thank you for registering with us!<br/>
+	%s<br/>
+	Please <a href="%s">click here</a> to verify your email address.<br/>
+	`,
+		user.FullName,
+		verifyEmail.SecretCode,
+		verifyUrl,
+	)
+	
+	to := []string{user.Email}
+
+	err = processor.mailer.SendEmail(subject, content, to, nil, nil, nil)
+	if err != nil {
+		return fmt.Errorf("failed to send verify email: %w", err)
+	}
+
+	return err
 }
