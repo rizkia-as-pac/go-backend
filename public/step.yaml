@@ -618,21 +618,21 @@
             protoc-gen-go-grpc --version
  
     - write protbuf definition for api (inside proto) : 
-      # Protocol buffer documentation: https://protobuf.dev/programming-guides/proto3/
-      - defined user object using protobufer :
-        # its like a custom data type
+        # Protocol buffer documentation: https://protobuf.dev/programming-guides/proto3/
+        - defined user object using protobufer :
+          # its like a custom data type
 
-    - add to setting.json in vscode to setting path:
-        "protoc": {
-            "options": [
-                "--proto_path=proto",
-            ]
-        },
+        - add to setting.json in vscode to setting path:
+            "protoc": {
+                "options": [
+                    "--proto_path=proto",
+                ]
+            },
 
 
-    - define object request and response for RPC (create user API) :
+        - define object request and response for RPC (create user API) :
 
-    - declare a gRPC service and add the RPC definition of that API:
+        - declare a gRPC service and add the RPC definition of that API:
 
     - generating Golang codes from service definition that we already create before : 
 
@@ -677,7 +677,7 @@
 [42] Implement gRPC API to create and login users in Go
     # it would be very similar to what we've implemented before for gin api
 
-    - define each RPC function in SimpleBankServer interface  : 
+    - define each RPC method for SimpleBankServer struct  : 
 
 [43] grpc GateWay. Write code once, serve both gRPC & HTTP requests.
 
@@ -941,9 +941,7 @@
 
   - use it in main function to run task processor in separate go routine :
 
-  
-
-[56] Send async tasks to Redis within a DB transaction :
+[56] Send async tasks to Redis within a DB transaction 
 
   - refactor transferTxv2 from store to separate files :
 
@@ -1089,3 +1087,66 @@
         update to create mailer and pass it to NewRedisTaskProcessor function in runTaskProcessor :
 
     
+[62] Implement email verification API in Go
+
+    #  - The idea is, when receiving an API request to verify email,
+
+    #  -We will look for the VerifyEmail record with the provided id and secret code in our database.
+
+    #  -If it exists and is not expired or already used, Then we can mark it as used,
+
+    #  -and update the is_email_verified field of the user to true.
+
+    Part 1 : building API
+
+    - write protobuf definition, create rpc verify email :
+
+    - add the new RPC definition to the gprc simple bank service :
+
+    - add new validator function to check Email Verification api request in validator package :
+
+    - add a new query to find and update verify email records :
+        #  find verification email by id and secret code
+        # set isUsed to true
+        # make sure it is not used yet or is_used field should false at the begining
+        # make sure is not expired yet
+
+            # -- name: UpdateVerifyEmail :one
+            # UPDATE verify_emails
+            # SET
+            #     is_used = TRUE
+            # WHERE
+            #     id = @id
+            #     AND secret_code = @secret_code
+            #     AND is_used = FALSE
+            #     AND expired_at > now()
+            # RETURNING *;
+
+
+
+    - renew UpdateUser query in user record :    
+        # renew to be able to update is_email_verified to new value
+
+        # -- name: UpdateUser :one
+        # UPDATE users
+        # SET
+        #     hashed_password = COALESCE(sqlc.narg(hashed_password), hashed_password),
+        #     password_changed_at = COALESCE(sqlc.narg(password_changed_at), password_changed_at),
+        #     full_name = COALESCE(sqlc.narg(full_name), full_name),
+        #     email = COALESCE(sqlc.narg(email), email)
+        #     is_email_verified = COALESCE(sqlc.narg(is_email_verified), is_email_verified)
+        # WHERE 
+        #     username = sqlc.arg(username)
+        # RETURNING *;
+
+    - run make sqlc and make mock :
+
+    - create a new db transaction VerifyEmailTx to manage update verify_emails table and also update users table:
+
+    - add VerifyEmailTx signature to store interface :
+        # because in the API layer, we only have access to this general store interace
+
+        - run make mock to update mockstore due to new VerifyEmailTx in store interface :
+
+    - implement VerifyEmail GAPI handler for SimpleBankServer struct in gapi package :
+

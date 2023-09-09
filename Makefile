@@ -67,5 +67,6 @@ createrediscontainer:
 
 
 #  delete from verify_emails ;delete from sessions; delete from transfers; delete from entries ; delete from accounts ; delete from users ;
+# atau jalankan saja make migdown, karna itu juga otomatis menghapus database dan isinya. lalu jalankan migup lagi
 
 .PHONY: createpgcontainer createdb dropdb newmigrate migrateup migratedown migrateup1 migratedown1 sqlcinit sqlcgenerate test server mock proto evans createrediscontainer
