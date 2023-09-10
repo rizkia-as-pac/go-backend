@@ -9,7 +9,6 @@ import (
 // Config menyimpan semua konfigurasi dari aplikasi
 // nilai nya berasal dari viper yang membaca dari config file atau environtment variable
 type Config struct {
-	DBDriver             string        `mapstructure:"DB_DRIVER"`
 	DBSource             string        `mapstructure:"DB_SOURCE"`
 	HTTPServerAddress    string        `mapstructure:"HTTP_SERVER_ADDRESS"`
 	GRPCServerAddress    string        `mapstructure:"GRPC_SERVER_ADDRESS"`

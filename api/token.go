@@ -1,12 +1,13 @@
 package api
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	db "github.com/tech_school/simple_bank/db/sqlc"
 )
 
 type renewAccessTokenRequest struct {
@@ -18,7 +19,7 @@ type renewAccessTokenResponse struct {
 	// AccessTokenExpiresAt akan berguna bagi client untuk setup shcedule to renew accesstoken
 	AccessTokenExpireAt time.Time `json:"access_token_expired_at"`
 }
- 
+
 func (server *Server) renewAccessToken(ctx *gin.Context) {
 	var req renewAccessTokenRequest
 
@@ -35,7 +36,7 @@ func (server *Server) renewAccessToken(ctx *gin.Context) {
 
 	session, err := server.store.GetSession(ctx, RTPayload.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrRecordNotFound) {
 			ctx.AbortWithStatusJSON(http.StatusNotFound, errorResponse(err))
 			return
 		}

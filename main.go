@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"net"
 	"net/http"
 	"os"
@@ -11,6 +10,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // subpackage untuk database postgres dari modul migrate
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/hibiken/asynq"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -26,8 +26,6 @@ import (
 	"github.com/tech_school/simple_bank/pb"
 	"github.com/tech_school/simple_bank/utils/conf"
 	"github.com/tech_school/simple_bank/worker"
-
-	_ "github.com/lib/pq"
 )
 
 // const (
@@ -49,6 +47,7 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
+	/* OLD LIB/PQ
 	conn, err := sql.Open(config.DBDriver, config.DBSource) // create new connection to db
 	if err != nil {
 		log.Fatal().Err(err).Msg("tidak bisa terkoneksi dengan database")
@@ -57,6 +56,18 @@ func main() {
 	runDBMigration(config.MigrationURL, config.DBSource)
 
 	store := db.NewStore(conn)
+	*/
+
+	// NEW PGX
+
+	connPool, err := pgxpool.New(context.Background(), config.DBSource) // create new connection pool
+	if err != nil {
+		log.Fatal().Err(err).Msg("tidak bisa terkoneksi dengan database")
+	}
+
+	runDBMigration(config.MigrationURL, config.DBSource)
+
+	store := db.NewStore(connPool)
 
 	// this asynq.RedisClientOpt object allows us to set up many different parameters to communicate with the Redis server.
 	// asynq.RedisClientOpt use to know how to connect to reddis

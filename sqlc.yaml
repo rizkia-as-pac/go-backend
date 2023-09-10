@@ -26,3 +26,9 @@ sql:
       emit_exact_table_names: false # jika false accounts table --> account struct. jika true accounts table --> accounts struct
       emit_empty_slices: true
       emit_prepared_queries: false
+      sql_package: "pgx/v5"
+      overrides:
+        - db_type: "timestamptz"
+          go_type: "time.Time"
+        - db_type: "uuid"
+          go_type: "github.com/google/uuid.UUID"

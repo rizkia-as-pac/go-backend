@@ -24,7 +24,7 @@ func createRandomUser(t *testing.T) User {
 		Email:          person.Email,
 	}
 
-	user, err := testQueries.CreateUser(context.Background(), arg)
+	user, err := testStore.CreateUser(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, user)
 
@@ -46,7 +46,7 @@ func TestCreateUser(t *testing.T) {
 func TestGetUser(t *testing.T) {
 	createdUser := createRandomUser(t)
 
-	userFromDB, err := testQueries.GetUser(context.Background(), createdUser.Username)
+	userFromDB, err := testStore.GetUser(context.Background(), createdUser.Username)
 	require.NoError(t, err)
 	require.NotEmpty(t, userFromDB)
 

@@ -12,7 +12,7 @@ const (
 	UniqueViolation     = "23505"
 )
 
-var ErrRecordNotFound = pgx.ErrNoRows
+var ErrRecordNotFound = pgx.ErrNoRows // this way, if we ever have to change the db driver again, we only need to update its value in 1 single place.
 
 var ErrUniqueViolation = &pgconn.PgError{
 	Code: UniqueViolation,

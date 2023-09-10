@@ -1153,3 +1153,70 @@
 [65] Config sqlc version 2 for Go and Postgres
 
 [66] Switch DB driver from lib/pq to pgx
+    # because lib/pq package currently put in maintenance mode, which mean it doesn't accept new features
+    #   1. It generally does not accept new features.
+    #   2. It does accept bug fixes and version compatability changes provided by the community.
+    #   3. Maintainers usually do not resolve reported issues.
+    #   4. Community members are encouraged to help each other with reported issues.
+
+    # For users that require new features or reliable resolution of reported bugs, we recommend using pgx which is under active development.
+
+   - installation  :
+      # copy this into main.go file with blank identifier and run go mod tidy
+        "github.com/jackc/pgx/v5" 
+      # this will keep package in import list even we're not using it directly in code yet
+    
+    - update sqlc config :
+        # udpdate sqlc config to tell it to use pgx db driver
+        #  ref : https://docs.sqlc.dev/en/stable/reference/config.html#go
+
+        # sql_package:
+        # Either pgx/v4, pgx/v5 or database/sql. Defaults to database/sql.
+
+    - run make sqlc generate :
+        # make sure slqc version is 1.18 before generate code
+
+    - fix breaking changes that occur :
+
+        - set sqlc config to tell sqlc overriding some data type use type overriding  :   
+            - use time.Time instead of default pgtype.Timestampz # time.Time is more convenience to use when the field is not nullable. Timestamptz field is only useful when the field can be null.
+            - use google.uuid.UUID instead of default pgtype.UUID # default pgtype.UUID is somehow a bit annoying to use compared to the google UUID package that we've been using in the course
+
+        - modify code in every file that using nullable from lib/pq to pgx nullable :
+            - tx_verify_email.go
+            - rpc_update_user.go
+
+        - modify code in store.go from using lib/pq to pgx :
+            - update and move execTx to new folder :
+
+        - modify code in main_test.go in db package from using lib/pq to pgx :
+            # we will create testStore object here to use in all testing in db package in db/sqlc
+        
+        - modify all test code in db package from using testQueries from lib/pq method to testStore from pgx method :
+            # use find in folder vscode feature to make it easier 
+
+        - modify all test function in db package to change :
+            # we check ErrNoRows from the database/sql package, while when we use pgx, pgx doesn't return this type of error in its implementation
+            # thus we need to change it 
+            from require.EqualError(t, err, db.ErrRecordNotFound .Error()) 
+            to require.EqualError(t, err, ErrRecordNotFound.Error()) 
+
+            use ErrRecordNotFound from db/sqlc/error.go
+
+        - test run make test and make sure all pass :
+
+        - after all other file fix, we can remove blank import in main.go file and modify main.go file from using lib/pq to pgx :
+
+    - we can remove DBDRIVER from env var and update conf because we're not need it anymore due to all changes from migration to pgx :
+
+    - try run make server to check its working or not :
+
+
+/* OLD LIB/PQ
+  IsEmailVerified: sql.NullBool{
+    Bool:  true,
+    Valid: true,
+  },
+*/
+
+// NEW PGX
