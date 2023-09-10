@@ -396,7 +396,7 @@
     #    8. server akan memverifikasi apakah token yang dikirim oleh client valid atau tidak 
     #    9. jika valid maka server akan mengirim balik status 200 beserta list akun yg di request 
 
-[20] Create and verify JWT & PASETO in golang :
+[20] Create and verify JWT & PASETO in golang 
   - create new package (token) :
 
   - create payload struct and function to create and verify it :
@@ -575,7 +575,7 @@
 
     - add new api to renew the access token when it expires but refresh token not expires yet (token.go) :
 
-    - new renew access token api handler as a new route in the server.go file :
+    - add new renew access token api handler as a new route in the server.go file :
 
   
   
@@ -796,10 +796,10 @@
     # optional tell protoc that this field is not mandatory
 
       # message UpdateUserRequest {
-      # string username = 1;
-      # optional string full_name = 2; // optional tell protoc that this field isnot mandatory to fill
-      # optional string email = 3;
-      # optional string password = 4;
+          # string username = 1;
+          # optional string full_name = 2; // optional tell protoc that this field isnot mandatory to fill
+          # optional string email = 3;
+          # optional string password = 4;
       # }
 
   - add a new RPC to simple bank service :
@@ -1151,3 +1151,5 @@
     - implement VerifyEmail GAPI handler for SimpleBankServer struct in gapi package :
 
 [65] Config sqlc version 2 for Go and Postgres
+
+[66] Switch DB driver from lib/pq to pgx

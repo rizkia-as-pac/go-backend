@@ -18,7 +18,7 @@ type renewAccessTokenResponse struct {
 	// AccessTokenExpiresAt akan berguna bagi client untuk setup shcedule to renew accesstoken
 	AccessTokenExpireAt time.Time `json:"access_token_expired_at"`
 }
-
+ 
 func (server *Server) renewAccessToken(ctx *gin.Context) {
 	var req renewAccessTokenRequest
 
