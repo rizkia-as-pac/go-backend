@@ -1,12 +1,10 @@
 package api
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
 	db "github.com/tech_school/simple_bank/db/sqlc"
 	"github.com/tech_school/simple_bank/token"
 )
@@ -42,18 +40,30 @@ func (server *Server) createAccount(ctx *gin.Context) {
 	}
 
 	account, err := server.store.CreateAccount(ctx, arg)
-	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			// print untuk melihat error code name
-			switch pqErr.Code.Name() {
-			case "foreign_key_violation", "unique_violation":
-				ctx.JSON(http.StatusForbidden, errorResponse(err))
-				return
-			}
-		} // konversi error ke tipe pq.error
+	/* OLD LIB/PQ
+	  if err != nil {
+			if pqErr, ok := err.(*pq.Error); ok {
+				// print untuk melihat error code name
+				switch pqErr.Code.Name() {
+				case "foreign_key_violation", "unique_violation":
+					ctx.JSON(http.StatusForbidden, errorResponse(err))
+					return
+				}
+			} // konversi error ke tipe pq.error
 
-		// jika error tidak nill pasti terdapat isu internal
-		// jadi kita harus mengirimkan status bahwa server sedang error
+			// jika error tidak nill pasti terdapat isu internal
+			// jadi kita harus mengirimkan status bahwa server sedang error
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+	*/
+	// NEW PGX
+	if err != nil {
+		errCode := db.ErrorCode(err) // try to convert err to pgError
+		if errCode == db.ForeignKeyViolation || errCode == db.UniqueViolation {
+			ctx.JSON(http.StatusForbidden, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -77,7 +87,7 @@ func (server *Server) getAccount(ctx *gin.Context) {
 	account, err := server.store.GetAccount(ctx, req.ID)
 	if err != nil {
 		// jika id account yang dicari tidak ada didalam sql
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrRecordNotFound) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}

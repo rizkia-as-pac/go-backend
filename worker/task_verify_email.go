@@ -65,7 +65,7 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Cont
 	// retrieve user record from the database
 	user, err := processor.store.GetUser(ctx, payload.Username)
 	if err != nil {
-		// if err == sql.ErrNoRows {
+		// if errors.Is(err, db.ErrRecordNotFound)  {
 		// 	// jika gagal karna user tidak ditemukan maka tidak perlu retry
 		// 	return fmt.Errorf("user tidak ditemukan : %w", asynq.SkipRetry)
 		// }
@@ -125,7 +125,7 @@ func createAndSendEmail(ctx context.Context, user db.User, processor *RedisTaskP
 		verifyEmail.SecretCode,
 		verifyUrl,
 	)
-	
+
 	to := []string{user.Email}
 
 	err = processor.mailer.SendEmail(subject, content, to, nil, nil, nil)

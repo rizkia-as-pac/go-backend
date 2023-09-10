@@ -252,7 +252,7 @@ func TestLoginUserAPI(t *testing.T) {
 				store.EXPECT().
 					GetUser(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(db.User{}, sql.ErrNoRows)
+					Return(db.User{}, db.ErrRecordNotFound)
 			},
 			checkResponse: func(store *testing.T, responseRecorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusNotFound, responseRecorder.Code)

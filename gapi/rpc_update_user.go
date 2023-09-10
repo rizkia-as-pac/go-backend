@@ -2,9 +2,10 @@ package gapi
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	db "github.com/tech_school/simple_bank/db/sqlc"
 	"github.com/tech_school/simple_bank/pb"
 	"github.com/tech_school/simple_bank/utils/pass"
@@ -29,6 +30,7 @@ func (server *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest)
 		return nil, status.Errorf(codes.PermissionDenied, "tidak bisa mengubah informasi user lain")
 	}
 
+	/* OLD LIB/PQ
 	arg := db.UpdateUserParams{
 		Username: req.GetUsername(),
 		FullName: sql.NullString{
@@ -57,11 +59,43 @@ func (server *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest)
 			Valid: true,
 		}
 	}
+	*/
+
+	// NEW PGX
+
+	arg := db.UpdateUserParams{
+		Username: req.GetUsername(),
+		FullName: pgtype.Text{
+			String: req.GetFullName(),
+			Valid:  req.FullName != nil,
+		},
+		Email: pgtype.Text{
+			String: req.GetEmail(),
+			Valid:  req.Email != nil,
+		},
+	}
+
+	if req.Password != nil {
+		hashedPassword, err := pass.HashedPassword(req.GetPassword())
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to hash password : %s", err)
+		}
+
+		arg.HashedPassword = pgtype.Text{
+			String: hashedPassword,
+			Valid:  true,
+		}
+
+		arg.PasswordChangedAt = pgtype.Timestamptz{
+			Time:  time.Now(),
+			Valid: true,
+		}
+	}
 
 	user, err := server.store.UpdateUser(ctx, arg)
 	if err != nil {
 		if err != nil {
-			if err == sql.ErrNoRows {
+			if errors.Is(err, db.ErrRecordNotFound) {
 				return nil, status.Errorf(codes.NotFound, "user tidak ditemukan : %s", err)
 
 			}
