@@ -25,7 +25,7 @@ func authMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 		// extract authorization header from request
 		authorizationHeader := ctx.GetHeader(authorizationHeaderKey)
 		if len(authorizationHeader) == 0 {
-			err := errors.New("Authorization header tidak diisi")
+			err := errors.New("authorization header tidak diisi")
 			// function ini membuat kita bisa melakukan abort pada request dan mengirimkan response json pada client
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))
 			return
@@ -34,7 +34,7 @@ func authMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 		fields := strings.Fields(authorizationHeader) // karna biasanya token akan berbentuk => Bearer dslkfhoehwfuiskfbsdvhseoihffoisdbviehfbfoo. sehingga kita pisahkan dengan acuan white space
 
 		if len(fields) < 2 {
-			err := errors.New("Authorization header tidak valid")
+			err := errors.New("authorization header tidak valid")
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))
 			return
 		}
