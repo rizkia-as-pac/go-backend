@@ -1,0 +1,23 @@
+[1] create a new github repository
+  - clone or add remote URL
+
+
+[26] Create a free tier AWS account to deploy application
+
+[27] Auto build & push docker image to AWS ECR with github Actions (PAUSED)
+  - create a (private) repository in AWS ECR to store our docker images :
+    # ECR is a fuly-managed docker container registry that make it easy to store, manage, and deploy docker container images.
+
+  - rename existing workflow ci.yml to test.yml  :
+
+  - setup IAM :
+    # Identity and Access Management (IAM) is a web service that helps you securely control access to AWS resources.
+    - add provider :
+        url : token.actions.githubusercontent.com
+        audience : sts.amazonaws.com
+
+    - create roles web identity roles:
+      fill github organization with your github account name
+
+  - create new workflow (deploy.yml) :
+      # we will use this workflow to build docker image and later deploy it to production
